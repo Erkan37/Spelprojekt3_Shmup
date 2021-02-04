@@ -5,9 +5,12 @@ namespace Studio
 	class MovementDiagonal : public Movement
 	{
 	public:
-		MovementDiagonal(VECTOR2F* anObjectsPosition, float aSpeed, float anAngle);
+		MovementDiagonal(VECTOR2F* anObjectsPosition, float aSpeed, VECTOR2F anAngle);
+
+		void SetMovementStartPosition(VECTOR2F* aPosition) override;
+
 		void Update() override;
 	private:
-		float myAngle;
+		VECTOR2F myAngle;
 	};
 }

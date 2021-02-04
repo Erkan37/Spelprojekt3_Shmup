@@ -1,5 +1,6 @@
 #pragma once
 #include "Module.h"
+#include "Shield.h"
 #include "rapidjson/document.h"
 namespace Studio
 {
@@ -8,13 +9,13 @@ namespace Studio
 	public:
 		Module_Shield(rapidjson::Value& aModuleParameters);
 
-		bool DoStuff() override;
+		bool DoStuff(Boss& aBoss) override;
 
 	protected:
 
 	private:
-		VECTOR2F myShieldCenter;
-		float myDuration;
+		bool myHasCreatedShield;
+		float myHitPoints;
 	};
 }
 

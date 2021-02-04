@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Player.h"
 #include "Bullet.h"
 #include "InputManager.h"
@@ -11,7 +11,6 @@
 #include "Coin.h"
 #include "Timer.h"
 #include "Player_JsonParser.h"
-
 
 #define SPRITESHEET GameObject::GetSpriteSheet()
 
@@ -32,12 +31,15 @@ namespace Studio
 		myRapidFireCurrentlyActiveTime = 0.f;
 		myTimeSinceLastShot = 0.f;
 		myBounceBackTime = 0.25;
+		myShieldCurrentActiveTime = 0.f;
+		myShieldCurrentCooldown = myPlayerData->GetShieldCooldown();
+		myShieldHealth = somePlayerData->GetShieldHealth();
+		myAmountOfProjectiles = 1;
 
 		mySpeed = somePlayerData->GetMinSpeed();
 		myRapidFireMaxActiveTime = somePlayerData->GetRapidFireMaxActiveTime();
 		myRapidFireCurrentCooldown = somePlayerData->GetRapidFireMaxCooldown();
-		GetCollider().AddCircleColliderObject(myPosition, 20);
-		GameObject::SetGodMode();
+		GetCollider().AddCircleColliderObject({0,0}, 20);
 	}
 
 	Player::~Player()
@@ -56,7 +58,9 @@ namespace Studio
 
 			Shoot();
 
-			RapidFireLogic(myPlayerData->GetCDReductionPercentage());
+			RapidFireLogic();
+
+			ShieldLogic();
 
 			Studio::RendererAccessor::GetInstance()->Render(*this);
 		}
@@ -69,8 +73,6 @@ namespace Studio
 			{
 				ScoreAccessor::GetInstance()->AddCoinScore(1);
 				worldCoins.erase(worldCoins.begin() + i);
-
-				printf_s("bruh");
 			}
 		}
 		//GameObject::GetCollider().Render();
@@ -79,10 +81,34 @@ namespace Studio
 	void Player::Shoot()
 	{
 		myTimeSinceLastShot += Timer::GetInstance()->TGetDeltaTime();
-		if (GetAsyncKeyState(VK_SPACE) && myTimeSinceLastShot > myPlayerData->GetShootCoolDown())
+		if (InputManager::GetInstance()->IsCustomKeyDown(Enums::CustomKeys::CustomKey_Shoot) && myTimeSinceLastShot > myPlayerData->GetShootCoolDown())
 		{
-    		Studio::LevelAccessor::GetInstance()->SpawnBullet("Player", myPosition);
+			if (myAmountOfProjectiles == 1)
+			{
+				Studio::LevelAccessor::GetInstance()->SpawnBullet("Player", { myPosition.x, myPosition.y - 5.f });
+
+			}
+			else if (myAmountOfProjectiles == 2)
+			{
+				Studio::LevelAccessor::GetInstance()->SpawnBullet("Player", { myPosition.x, myPosition.y - 20.f });
+				Studio::LevelAccessor::GetInstance()->SpawnBullet("Player", { myPosition.x, myPosition.y + 10.f });
+
+			}
+			else if (myAmountOfProjectiles == 3)
+			{
+				Studio::LevelAccessor::GetInstance()->SpawnBullet("Player", { myPosition.x, myPosition.y - 5.f });
+				Studio::LevelAccessor::GetInstance()->SpawnBullet("Player", { myPosition.x, myPosition.y - 30.f });
+				Studio::LevelAccessor::GetInstance()->SpawnBullet("Player", { myPosition.x, myPosition.y + 20.f });
+			}
 			myTimeSinceLastShot = 0.f;
+
+			// Launch
+			// TODO: Don't do this all the time
+
+		}
+		if (InputManager::GetInstance()->IsCustomKeyPressed(Enums::CustomKeys::CustomKey_Explosive))
+		{
+			LaunchMissile();
 		}
 	}
 
@@ -100,6 +126,129 @@ namespace Studio
 	{
 		return myDirection;
 	}
+	void Player::UpgradeRapidFire(Enums::RapidFireUpgrades aRapidFireUpgrade)
+	{
+		switch (aRapidFireUpgrade)
+		{
+		case Studio::Enums::RapidFireUpgrades::CooldownT1:
+			myPlayerData->UpgradeRapidFireCooldownT1();
+			break;
+		case Studio::Enums::RapidFireUpgrades::AttackSpeedT1:
+			myPlayerData->UpgradeRapidFireAttackSpeedT1();
+			break;
+		case Studio::Enums::RapidFireUpgrades::AttackSpeedT2:
+			myPlayerData->UpgradeRapidFireAttackSpeedT2();
+			break;
+		case Studio::Enums::RapidFireUpgrades::DurationT1:
+			myPlayerData->UpgradeRapidFireDurationT1();
+			break;
+		case Studio::Enums::RapidFireUpgrades::DurationT2:
+			myPlayerData->UpgradeRapidFireDurationT2();
+			break;
+		case Studio::Enums::RapidFireUpgrades::PenetratingT3:
+			myHasPurchasedPenetratingRounds = true;
+			break;
+		}
+	}
+
+	void Player::UpgradeT1(Enums::Tier1Upgrades aTier1Upgrade)
+	{
+		switch (aTier1Upgrade)
+		{
+		case Studio::Enums::Tier1Upgrades::RapidFireCooldown:
+			myPlayerData->UpgradeRapidFireCooldownT1();
+			break;
+		case Studio::Enums::Tier1Upgrades::RapidFireAttackSpeed:
+			myPlayerData->UpgradeRapidFireAttackSpeedT1();
+			break;
+		case Studio::Enums::Tier1Upgrades::RapidFireDuration:
+			myPlayerData->UpgradeRapidFireDurationT1();
+			break;
+		case Studio::Enums::Tier1Upgrades::MovementSpeed:
+			break;
+		case Studio::Enums::Tier1Upgrades::BasicAttackSpeed:
+			myPlayerData->UpgradeBasicAttackSpeedT1();
+			break;
+		case Studio::Enums::Tier1Upgrades::MissileExplosionRadius:
+			break;
+		case Studio::Enums::Tier1Upgrades::MissileCooldown:
+			break;
+		case Studio::Enums::Tier1Upgrades::MissileDamage:
+			break;
+		case Studio::Enums::Tier1Upgrades::ShieldDuration:
+			myPlayerData->UpgradeShieldDurationT1();
+			break;
+		case Studio::Enums::Tier1Upgrades::ShieldHealth:
+			myPlayerData->UpgradeShieldHealthT1();
+			break;
+		case Studio::Enums::Tier1Upgrades::ShieldCooldown:
+			myPlayerData->UpgradeShieldCooldownT1();
+			break;
+		}
+	}
+
+	void Player::UpgradeT2(Enums::Tier2Upgrades aTier2Upgrade)
+	{
+		switch (aTier2Upgrade)
+		{
+		case Studio::Enums::Tier2Upgrades::RapidFireAttackSpeed:
+			myPlayerData->UpgradeRapidFireAttackSpeedT2();
+			break;
+		case Studio::Enums::Tier2Upgrades::RapidFireDuration:
+			myPlayerData->UpgradeRapidFireDurationT2();
+			break;
+		case Studio::Enums::Tier2Upgrades::BasicAttackSpeed:
+			myPlayerData->UpgradeBasicAttackSpeedT2();
+			break;
+		case Studio::Enums::Tier2Upgrades::BasicAttackAdditionalProjectile:
+			AddAnotherProjectile();
+			break;
+		case Studio::Enums::Tier2Upgrades::MissileExplosionRadius:
+			break;
+		case Studio::Enums::Tier2Upgrades::MissileCooldown:
+			break;
+		case Studio::Enums::Tier2Upgrades::MissileDamage:
+			break;
+		case Studio::Enums::Tier2Upgrades::ShieldDuration:
+			myPlayerData->UpgradeShieldDurationT2();
+			break;
+		case Studio::Enums::Tier2Upgrades::ShieldHealth:
+			myPlayerData->UpgradeShieldHealthT2();
+			break;
+		case Studio::Enums::Tier2Upgrades::ShieldCooldown:
+			myPlayerData->UpgradeShieldCooldownT2();
+			break;
+		}
+	}
+
+	void Player::UpgradeT3(Enums::Tier3Upgrades aTier3Upgrade)
+	{
+		switch (aTier3Upgrade)
+		{
+		case Studio::Enums::Tier3Upgrades::RapidFirePenetrating:
+			myHasPurchasedPenetratingRounds = true;
+			break;
+		case Studio::Enums::Tier3Upgrades::BasicAttackSpeed:
+			myPlayerData->UpgradeBasicAttackSpeedT3();
+			break;
+		case Studio::Enums::Tier3Upgrades::MissileCluster:
+			break;
+		case Studio::Enums::Tier3Upgrades::ShieldExplosion:
+			break;
+		}
+	}
+
+	void Studio::Player::ResetPlayerCurrentLevel()
+	{
+		GameObject::GetHealth().ResetHealth();
+		myPosition = { 300, 540 };
+		GameObject::SetPosition(myPosition);
+	}
+
+	bool Player::HasPenetratingRounds()
+	{
+		return myHasPenetratingRounds;
+	}
 
 	const bool Player::GetHasCollided() const
 	{
@@ -108,6 +257,12 @@ namespace Studio
 
 	void Player::Movement()
 	{
+
+		bool wKey = InputManager::GetInstance()->IsCustomKeyDown(Enums::CustomKeys::CustomKey_FlyUp);
+		bool aKey = InputManager::GetInstance()->IsCustomKeyDown(Enums::CustomKeys::CustomKey_FlyLeft);
+		bool sKey = InputManager::GetInstance()->IsCustomKeyDown(Enums::CustomKeys::CustomKey_FlyDown);
+		bool dKey = InputManager::GetInstance()->IsCustomKeyDown(Enums::CustomKeys::CustomKey_FlyRight);
+		//W
 		myDirection = myDirection.Zero;
 		if (myHasCollided)
 		{
@@ -134,11 +289,6 @@ namespace Studio
 			myHasCollided = false;
 			myCurrentBounceTime = 0;
 			myBounceDirection = myBounceDirection.Zero;
-
-			bool wKey = Studio::InputManager::GetInstance()->IsKeyDown('W');
-			bool aKey = Studio::InputManager::GetInstance()->IsKeyDown('A');
-			bool sKey = Studio::InputManager::GetInstance()->IsKeyDown('S');
-			bool dKey = Studio::InputManager::GetInstance()->IsKeyDown('D');
 			//W
 			/*if ((wKey && aKey) || (wKey && dKey) || (sKey && aKey) || (sKey && dKey))
 			{
@@ -186,7 +336,7 @@ namespace Studio
 					mySpeed += myPlayerData->GetAcceleration();
 				}
 			}
-			printf("Player Speed: %f\n", mySpeed);
+			//printf("Player Speed: %f\n", mySpeed);
 			if (wKey && myPosition.y > 0)
 			{
 				if (myIsAnimatingDown || !myIsAnimating)
@@ -279,27 +429,29 @@ namespace Studio
 		//printf_s("Player Direction X: %f Y: %f \n", myDirection.x, myDirection.y);
 		
 	}
-	void Player::RapidFireLogic(float aCDReductionPercentage)
+	void Player::RapidFireLogic()
 	{
-		//printf_s("%f\n", myPlayerData->GetShootCoolDown());
-
-		ActivateRapidFire(aCDReductionPercentage);
+		ActivateRapidFire();
 
 		RapidFireIsActive();
 
-		DeactivateRapidFire(aCDReductionPercentage);
+		DeactivateRapidFire();
 
 	}
 	//Check if key is pressed and cooldown has expired
-	void Player::ActivateRapidFire(float aCDReductionPercentage)
+	void Player::ActivateRapidFire()
 	{
 		if (InputManager::GetInstance()->IsKeyPressed('1') && myRapidFireCurrentCooldown > myPlayerData->GetRapidFireMaxCooldown())
 		{
 			myRapidFireCurrentCooldown = 0.f;
 
 			myRapidFireIsActive = true;
+			if (myHasPurchasedPenetratingRounds)
+			{
+				myHasPenetratingRounds = true;
+			}
 
-			myPlayerData->SetShootCoolDown(myPlayerData->GetShootCoolDown() * (1 - aCDReductionPercentage * 0.01));
+			myPlayerData->SetShootCoolDown(myPlayerData->GetShootCoolDown() * (1 - myPlayerData->GetRapidFireAttackSpeed() * 0.01));
 		}
 	}
 	//Check if Rapidfire is active
@@ -317,14 +469,74 @@ namespace Studio
 		}
 	}
 	//check if RapidFire is active for as long as it is allowed to be active, then deactive itand bring back baseline attack speed.
-	void Player::DeactivateRapidFire(float aCDReductionPercentage)
+	void Player::DeactivateRapidFire()
 	{
 		if (myRapidFireCurrentlyActiveTime > myPlayerData->GetRapidFireMaxActiveTime())
 		{
 			myRapidFireIsActive = false;
-
-			myPlayerData->SetShootCoolDown(myPlayerData->GetShootCoolDown() * (1 - aCDReductionPercentage * 0.01));
+			myHasPenetratingRounds = false;
+			myPlayerData->SetShootCoolDown(myPlayerData->GetShootCoolDown() / (1 - myPlayerData->GetRapidFireAttackSpeed() * 0.01));
 		}
 	}
-}
+	void Player::AddAnotherProjectile()
+	{
+		myAmountOfProjectiles++;
+		if (myAmountOfProjectiles > 3)
+		{
+			myAmountOfProjectiles = 3;
+		}
+	}
 
+	void Player::LaunchMissile()
+	{
+		Studio::LevelAccessor::GetInstance()->SpawnMissile(Enums::BulletOwner::Player, myPosition);
+	}
+	void Studio::Player::ShieldLogic()
+	{
+		if (InputManager::GetInstance()->IsKeyPressed('3') && myShieldCurrentCooldown >= myPlayerData->GetShieldCooldown())
+		{
+			ActivateShield();
+		}
+		if (myShieldIsActive)
+		{
+			ShieldIsActive();
+		}
+		else
+		{
+			myShieldCurrentCooldown += Timer::GetInstance()->TGetDeltaTime();
+		}
+		if (myShieldHealth <= 0)
+		{
+			DeactivateShield();
+		}
+	}
+	void Studio::Player::ActivateShield()
+	{
+		myShieldHealth = myPlayerData->GetShieldHealth();
+		myShieldIsActive = true;
+		myShieldCurrentCooldown = 0.f;
+	}
+	void Studio::Player::ShieldIsActive()
+	{
+		myShieldCurrentActiveTime += Timer::GetInstance()->TGetDeltaTime();
+		printf("\nShield active");
+		
+	}
+	void Studio::Player::DeactivateShield()
+	{
+		myShieldIsActive = false;
+		myShieldCurrentActiveTime = 0.f;
+		myShieldCurrentCooldown = 0.f;
+		myShieldHealth = myPlayerData->GetShieldHealth();
+		
+	}
+	void Studio::Player::TakeShieldDamage(int someDamage)
+	{
+		myShieldHealth -= someDamage;
+
+	}
+	bool Studio::Player::GetIsShieldActive()
+	{
+		return myShieldIsActive;
+	}
+}

@@ -2,13 +2,9 @@
 #include "GameObject.h"
 namespace Studio
 {
-	// Deprecated. See GameObject.h for further details
-	GameObject::GameObject(Tga2D::CSprite* aSprite) : myRenderCommand(aSprite),
-		myHealth(100)
-		,mySpriteSheet(nullptr) // This is bad
+	GameObject::GameObject() : mySpriteSheet(nullptr)
 	{
 	}
-
 
 	GameObject::GameObject(const std::string& anImagePath) :
 		myHealth(100), // Maybe this should be set somewhere???
@@ -30,7 +26,6 @@ namespace Studio
 	
 	void GameObject::Update(const Tga2D::Vector2f& aPos)
 	{
-		myRenderCommand.Update(aPos);
 		myCollider.Update(aPos);
 		mySpriteSheet.SetPosition(aPos);
 		mySpriteSheet.UpdateAnimation();
@@ -40,27 +35,7 @@ namespace Studio
 	{
 		mySpriteSheet.SetFrame(aCurrentFrame);
 	}
-	void GameObject::Update(const Tga2D::Vector2f& aPos, const Tga2D::Vector2f& aTexRecTopL, const Tga2D::Vector2f& aTexRecBotR)
-	{
-		myRenderCommand.Update(aPos, aTexRecTopL, aTexRecBotR);
-	}
-
-	void GameObject::Rotate(const float aRotationInRadians)
-	{
-		myRenderCommand.Rotate(aRotationInRadians);
-	}
-	void GameObject::RotateRight(const float aRotationInRadians)
-	{
-		myRenderCommand.RotateRight(aRotationInRadians);
-	}
-	void GameObject::RotateLeft(const float aRotationInRadians)
-	{
-		myRenderCommand.RotateLeft(aRotationInRadians);
-	}
-	void GameObject::SetRotation(float aRotationInRadians)
-	{
-		myRenderCommand.SetRotation(aRotationInRadians);
-	}
+	
 	void GameObject::SetPosition(const Tga2D::Vector2f& aPos)
 	{
 		myPosition = aPos;
@@ -73,31 +48,24 @@ namespace Studio
 	{
 		myPosition.y = aYVal;
 	}
-	const float GameObject::GetRotation() const
-	{
-		return myRenderCommand.GetRotation();
-	}
 
 	const Tga2D::Vector2f& GameObject::GetPosition()
 	{
 		return myPosition;
 	}
 
-	Sprite& Studio::GameObject::GetSprite()
+	Tga2D::Vector2f* GameObject::GetPositionPointer()
 	{
-		return mySprite;
+		return &myPosition;
 	}
+
 
 	Health& Studio::GameObject::GetHealth()
 	{
 		return myHealth;
 	}
 
-	Studio::RenderCommand& GameObject::GetRenderCommand() 
-	{
-		return myRenderCommand;
-	}
-
+	
 	bool GameObject::Intersects(GameObject& aGameObject)
 	{
 		return myCollider.Intersects(aGameObject.myCollider);
@@ -133,9 +101,9 @@ namespace Studio
 		return myHealth.IsDead();
 	}
 
-	void GameObject::SetGodMode()
+	void GameObject::SetGodMode(bool aGodMode)
 	{
-		myHealth.SetGodMode(true);
+		myHealth.SetGodMode(aGodMode);
 	}
 
 	SpriteSheet& GameObject::GetSpriteSheet()

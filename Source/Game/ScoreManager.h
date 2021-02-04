@@ -20,6 +20,7 @@ namespace Studio
 		void AddKillScore(int anAmount);
 		void RemoveKillScore(int anAmount);
 		void SetKillScore(int anAmount);
+		void ResetScore();
 
 		int GetCoinScore();
 		int GetKillScore();
@@ -29,6 +30,7 @@ namespace Studio
 
 		TextElement* myCoinTextElement;
 		TextElement* myKillTextElement;
+		TextElement* myShopCoinTextElement;
 	};
 }
 

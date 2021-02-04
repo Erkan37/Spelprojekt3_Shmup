@@ -16,6 +16,11 @@ namespace Studio
 
 	}
 
+	void MovementBobbing::SetMovementStartPosition(VECTOR2F* aPosition)
+	{
+		this->myObjectsPosition = aPosition;
+	}
+
 	void MovementBobbing::Update()
 	{
 		myTotalTime += Timer::GetInstance()->TGetDeltaTime();

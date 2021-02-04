@@ -30,8 +30,6 @@ Studio::TestButton::TestButton(const char* aPath, const VECTOR2F aPosition, cons
 	myTop = mySpriteSheet->GetPosition().y - (mySprite->GetImageSize().y/2);
 	myBottom = mySprite->GetPosition().y + (mySprite->GetImageSize().y/2);
 
-	std::cout << myLeft << " " << myRight << " " << myTop << " " << myBottom << std::endl;
-
 
 
 	tag = aTag;
@@ -62,6 +60,13 @@ void Studio::TestButton::Update()
 			{
 				if (pt.y >= myTop && pt.y <= myBottom)
 				{
+					if (!hasBeenHoveredOver)
+					{
+						AudioManagerAccessor::GetInstance()->Play2D("Audio/UI/ButtonHoverTemp.wav", false, 0.05f);
+						hasBeenHoveredOver = true;
+					}
+
+
 					if (Studio::InputManager::GetInstance()->GetMouseLPressed())
 					{
 						OnClick();
@@ -69,6 +74,14 @@ void Studio::TestButton::Update()
 						myIsEnabled = false;
 					}
 				}
+				else
+				{
+					hasBeenHoveredOver = false;
+				}
+			}
+			else
+			{
+				hasBeenHoveredOver = false;
 			}
 		}
 

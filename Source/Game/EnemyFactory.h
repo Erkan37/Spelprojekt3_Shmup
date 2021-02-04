@@ -10,10 +10,14 @@ namespace Studio
 	public:
 		EnemyFactory() = default;
 		~EnemyFactory();
-		void InitEnemyType(const std::string& aPath, const unsigned int aLayerOrder, const std::string& aType);
-		Studio::Enemy* CreateEnemyObject(const std::string& aType, const Tga2D::Vector2f& aPosition);
+		void InitEnemyType(rapidjson::Document& someJsonData, const std::string& aType);
+		Studio::Enemy* CreateEnemyObject(const std::string& aType, const Tga2D::Vector2f& aSpawnPosition);
+
+		// Loads and parses all JSON/Enemies/*.json into EnemyType
+		void InitAllEnemyTypes();
+
 	private:
-		std::map<std::string, TypePattern_Enemy*> myEnemyObjects;
+		std::map<std::string, TypePattern_Enemy*> myEnemyObjectTypes;
 	};
 }
 

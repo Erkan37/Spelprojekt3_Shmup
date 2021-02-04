@@ -20,8 +20,6 @@ TADb
 TAW
 TAB
 TAS
-TAH
-TAU
 T_bunker1
 T_bunker1wave
 T_bunker2
@@ -48,7 +46,15 @@ T_rock2
 T_rock2wave
 T_rock3
 T_rock3wave
-T_turret
-T_turretwave
+Turret
+Turretwave
 T_villa
-T_villa1
+T_villawave
+T_villa2
+T_villa2wave
+T_haybale
+T_haybalewave
+T_haybale2
+T_haybale2wave
+T_Fyr
+T_Fyrwave

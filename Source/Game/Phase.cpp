@@ -8,6 +8,7 @@
 #include "Module_Shield.h"
 #include "Module_Shoot.h"
 #include "Module_SpawnEnemies.h"
+#include "Module_Movement.h"
 
 //Gameplay
 #include "Boss.h"
@@ -19,32 +20,56 @@ Studio::Phase::Phase(rapidjson::Value& aPhaseParameters)
 		auto modules = aPhaseParameters.GetArray();
 		for (size_t i = 0; i < modules.Size(); i++)
 		{
-			if (modules[i]["Module"].GetString() == "Immunity")
+			if (modules[i].HasMember("Module") && modules[i]["Module"].IsString())
 			{
-				myModules.push_back(new Module_Immunity(modules[i]));
-			}
-			if (modules[i]["Module"].GetString() == "Delay")
-			{
-				myModules.push_back(new Module_Delay(modules[i]));
-			}
-			if (modules[i]["Module"].GetString() == "Enemy")
-			{
-				myModules.push_back(new Module_SpawnEnemies(modules[i]));
-			}
-			if (modules[i]["Module"].GetString() == "Ability")
-			{
-				myModules.push_back(new Module_Shield(modules[i]));
-			}
-			if (modules[i]["Module"].GetString() == "Shoot")
-			{
-				myModules.push_back(new Module_Shoot(modules[i]));
+				std::string type = modules[i]["Module"].GetString();
+				if (type == "Immunity")
+				{
+					myModules.push_back(new Module_Immunity(modules[i]));
+				}
+				else if (type == "Delay")
+				{
+					myModules.push_back(new Module_Delay(modules[i]));
+				}
+				else if (type == "Enemy")
+				{
+					myModules.push_back(new Module_SpawnEnemies(modules[i]));
+				}
+				else if (type == "Ability")
+				{
+
+					if (modules[i].HasMember("Ability") && modules[i]["Ability"].IsString())
+					{
+						std::string ability = modules[i]["Ability"].GetString();
+						if (ability == "Shield")
+						{
+							myModules.push_back(new Module_Shield(modules[i]));
+						}
+						if (ability == "Missile")
+						{
+							printf("Missile is not implemented yet");
+						}
+					}
+				}
+				else if (type == "Shoot")
+				{
+					myModules.push_back(new Module_Shoot(modules[i]));
+				}
+				else if (type == "Movement")
+				{
+					myModules.push_back(new Module_Movement(modules[i]));
+
+				}
+				else
+				{
+					printf("The Module Type: %s is either wrong or not implemented\n", modules[i]["Module"].GetString());
+				}
 			}
 			else
 			{
-				printf("That Module Type is either wrong or not implemented ");
+				printf("Cant read Module Type");
 			}
 		}
-		//Read whether the phase is looped or just done once
 	}
 	else
 	{
@@ -52,26 +77,45 @@ Studio::Phase::Phase(rapidjson::Value& aPhaseParameters)
 	}
 	myModuleAmount = static_cast<int>(myModules.size());
 	myCurrentModule = 0;
+	myHasPlayedOnce = false;
 }
 
 Studio::Phase::~Phase()
 {
+	for (Module* module : myModules)
+	{
+		module->~Module();
+	}
+	myModules.clear();
+}
+
+bool Studio::Phase::HavePlayedOnce()
+{
+	return myHasPlayedOnce;
 }
 
 void Studio::Phase::PlayModules(Boss* aBossObject)
 {
 	//TODO
 	// - Change Name For Module Function
-	// - Add Boss Parameter to DoStuff()
-	if (myModules[myCurrentModule]->DoStuff())
+	if (!myModules.empty())
 	{
-		if (myCurrentModule < myModuleAmount /*&& if looped phase and not do once*/)
+		if (myModules[myCurrentModule]->DoStuff(*aBossObject))
 		{
-			myCurrentModule++;
-		}
-		else
-		{
-			myCurrentModule = 0;
+			if (myCurrentModule < myModuleAmount - 1)
+			{
+				myCurrentModule++;
+			}
+			else
+			{
+				myHasPlayedOnce = true;
+				myCurrentModule = 0;
+			}
 		}
 	}
+
+}
+
+void Studio::Phase::UpdateModuleMovement()
+{
 }

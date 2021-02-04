@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Ability.h" />
+    <ClInclude Include="AOEBullet.h" />
     <ClInclude Include="AudioClip.h" />
     <ClInclude Include="AudioManager.h" />
     <ClInclude Include="AudioManagerAccesor.h" />
@@ -142,6 +143,7 @@
     <ClInclude Include="BackgroundObject.h" />
     <ClInclude Include="BackgroundManager.h" />
     <ClInclude Include="Boss.h" />
+    <ClInclude Include="BossManager.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="BulletFactory.h" />
     <ClInclude Include="ButtonElement.h" />
@@ -156,10 +158,13 @@
     <ClInclude Include="Condition_Time.h" />
     <ClInclude Include="Condition_Timed.h" />
     <ClInclude Include="Counter.h" />
+    <ClInclude Include="EffectExplosionLarge.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="EnemyFactory.h" />
     <ClInclude Include="EngineFlame.h" />
     <ClInclude Include="Enums.h" />
+    <ClInclude Include="ExitButton.h" />
+    <ClInclude Include="GenericButton.h" />
     <ClInclude Include="GodModeButton.h" />
     <ClInclude Include="HealthBar.h" />
     <ClInclude Include="ImageElement.h" />
@@ -167,9 +172,11 @@
     <ClInclude Include="MenuManager.h" />
     <ClInclude Include="MenuManagerSingleton.h" />
     <ClInclude Include="MenuObject.h" />
+    <ClInclude Include="Missile.h" />
     <ClInclude Include="Module.h" />
     <ClInclude Include="Module_Delay.h" />
     <ClInclude Include="Module_Immunity.h" />
+    <ClInclude Include="Module_Movement.h" />
     <ClInclude Include="Module_Shield.h" />
     <ClInclude Include="Module_Shoot.h" />
     <ClInclude Include="Module_SpawnEnemies.h" />
@@ -188,6 +195,7 @@
     <ClInclude Include="MovementStraight.h" />
     <ClInclude Include="MovementWave.h" />
     <ClInclude Include="Pack.h" />
+    <ClInclude Include="PlayerAccessor.h" />
     <ClInclude Include="Player_JsonParser.h" />
     <ClInclude Include="Phase.h" />
     <ClInclude Include="RenderCommand.h" />
@@ -197,8 +205,13 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScoreAccessor.h" />
     <ClInclude Include="ScoreManager.h" />
+    <ClInclude Include="Shield.h" />
+    <ClInclude Include="ShopButton.h" />
+    <ClInclude Include="ShopButtonTier2.h" />
+    <ClInclude Include="ShopUI.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="SpriteSheet.h" />
+    <ClInclude Include="StartButton.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TestButton.h" />
@@ -211,6 +224,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ability.cpp" />
+    <ClCompile Include="AOEBullet.cpp" />
     <ClCompile Include="AudioClip.cpp" />
     <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="AudioManagerAccesor.cpp" />
@@ -218,6 +232,7 @@
     <ClCompile Include="BackgroundObject.cpp" />
     <ClCompile Include="BackgroundManager.cpp" />
     <ClCompile Include="Boss.cpp" />
+    <ClCompile Include="BossManager.cpp" />
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="BulletFactory.cpp" />
     <ClCompile Include="ButtonElement.cpp" />
@@ -232,9 +247,12 @@
     <ClCompile Include="Condition_Time.cpp" />
     <ClCompile Include="Condition_Timed.cpp" />
     <ClCompile Include="Counter.cpp" />
+    <ClCompile Include="EffectExplosionLarge.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="EnemyFactory.cpp" />
     <ClCompile Include="EngineFlame.cpp" />
+    <ClCompile Include="ExitButton.cpp" />
+    <ClCompile Include="GenericButton.cpp" />
     <ClCompile Include="GodModeButton.cpp" />
     <ClCompile Include="HealthBar.cpp" />
     <ClCompile Include="ImageElement.cpp" />
@@ -242,9 +260,11 @@
     <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="MenuManagerSingleton.cpp" />
     <ClCompile Include="MenuObject.cpp" />
+    <ClCompile Include="Missile.cpp" />
     <ClCompile Include="Module.cpp" />
     <ClCompile Include="Module_Delay.cpp" />
     <ClCompile Include="Module_Immunity.cpp" />
+    <ClCompile Include="Module_Movement.cpp" />
     <ClCompile Include="Module_Shield.cpp" />
     <ClCompile Include="Module_Shoot.cpp" />
     <ClCompile Include="Module_SpawnEnemies.cpp" />
@@ -262,6 +282,7 @@
     <ClCompile Include="MovementStraight.cpp" />
     <ClCompile Include="MovementWave.cpp" />
     <ClCompile Include="Pack.cpp" />
+    <ClCompile Include="PlayerAccessor.cpp" />
     <ClCompile Include="Player_JsonParser.cpp" />
     <ClCompile Include="Phase.cpp" />
     <ClCompile Include="RenderCommand.cpp" />
@@ -270,8 +291,13 @@
     <ClCompile Include="RendererAccessor.cpp" />
     <ClCompile Include="ScoreAccessor.cpp" />
     <ClCompile Include="ScoreManager.cpp" />
+    <ClCompile Include="Shield.cpp" />
+    <ClCompile Include="ShopButton.cpp" />
+    <ClCompile Include="ShopButtonTier2.cpp" />
+    <ClCompile Include="ShopUI.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="SpriteSheet.cpp" />
+    <ClCompile Include="StartButton.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

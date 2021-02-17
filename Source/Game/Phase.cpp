@@ -6,9 +6,11 @@
 #include "Module_Immunity.h"
 #include "Module_Delay.h"
 #include "Module_Shield.h"
+#include "Module_Missile.h"
 #include "Module_Shoot.h"
 #include "Module_SpawnEnemies.h"
 #include "Module_Movement.h"
+#include "Module_Laser.h"
 
 //Gameplay
 #include "Boss.h"
@@ -47,7 +49,7 @@ Studio::Phase::Phase(rapidjson::Value& aPhaseParameters)
 						}
 						if (ability == "Missile")
 						{
-							printf("Missile is not implemented yet");
+							myModules.push_back(new Module_Missile(modules[i]));
 						}
 					}
 				}
@@ -60,20 +62,13 @@ Studio::Phase::Phase(rapidjson::Value& aPhaseParameters)
 					myModules.push_back(new Module_Movement(modules[i]));
 
 				}
-				else
+				else if (type == "Laser")
 				{
-					printf("The Module Type: %s is either wrong or not implemented\n", modules[i]["Module"].GetString());
+					myModules.push_back(new Module_Laser(modules[i]));
+
 				}
 			}
-			else
-			{
-				printf("Cant read Module Type");
-			}
 		}
-	}
-	else
-	{
-		printf_s("Phase Is Not Correctly Read Through Json");
 	}
 	myModuleAmount = static_cast<int>(myModules.size());
 	myCurrentModule = 0;
@@ -84,7 +79,7 @@ Studio::Phase::~Phase()
 {
 	for (Module* module : myModules)
 	{
-		module->~Module();
+		SAFE_DELETE(module);
 	}
 	myModules.clear();
 }
@@ -116,6 +111,13 @@ void Studio::Phase::PlayModules(Boss* aBossObject)
 
 }
 
-void Studio::Phase::UpdateModuleMovement()
+void Studio::Phase::ResetPhase()
 {
+	for (Module* module : myModules)
+	{
+		module->ResetModule();
+	}
+
+	myHasPlayedOnce = false;
+	myCurrentModule = 0;
 }

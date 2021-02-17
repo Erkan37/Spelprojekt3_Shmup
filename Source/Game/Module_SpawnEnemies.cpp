@@ -18,13 +18,13 @@ Studio::Module_SpawnEnemies::Module_SpawnEnemies(rapidjson::Value& aModuleParame
 	if (aModuleParameters.HasMember("Style"))
 	{
 		std::string style = aModuleParameters["Style"].GetString();
-		if (style == "Absolute")
+		if (style == "Relative")
 		{
-			mySpawnIsRelative = false;
+			mySpawnIsRelative = true;
 		}
 		else
 		{
-			mySpawnIsRelative = true;
+			mySpawnIsRelative = false;
 		}
 	}
 	else
@@ -39,9 +39,7 @@ Studio::Module_SpawnEnemies::Module_SpawnEnemies(rapidjson::Value& aModuleParame
 		x = aModuleParameters["X"].GetFloat();
 		y = aModuleParameters["Y"].GetFloat();
 
-		x = SCREEN_WIDTH - x;
-		y = y + SCREEN_HEIGHT * 0.5f;
-		mySpawnPosition = { x , y };
+		myOriginalSpawnPosition = { x , y };
 	}
 	else
 	{
@@ -53,11 +51,19 @@ bool Studio::Module_SpawnEnemies::DoStuff(Boss& aBoss)
 {
 	if (mySpawnIsRelative)
 	{
-		mySpawnPosition.x = aBoss.GetPosition()->x - mySpawnPosition.x;
-		mySpawnPosition.y = aBoss.GetPosition()->y - mySpawnPosition.y;
+		mySpawnPosition.x = aBoss.GetPosition()->x - myOriginalSpawnPosition.x;
+		mySpawnPosition.y = aBoss.GetPosition()->y - myOriginalSpawnPosition.y;
+	}
+	else
+	{
+		mySpawnPosition.x = SCREEN_WIDTH - myOriginalSpawnPosition.x;
+		mySpawnPosition.y = myOriginalSpawnPosition.y + SCREEN_HEIGHT * 0.5f;
 	}
 	auto enemy = Studio::LevelAccessor::GetInstance()->myEnemyFactory->CreateEnemyObject(myType, mySpawnPosition);
 	Studio::LevelAccessor::GetInstance()->AddEnemy(enemy);
-	//printf("Spawned Enemy Done\n");
 	return true;
+}
+
+void Studio::Module_SpawnEnemies::ResetModule()
+{
 }

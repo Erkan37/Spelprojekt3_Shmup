@@ -4,14 +4,14 @@
 #include "Bullet.h"
 #include "Missile.h"
 #include "AOEBullet.h"
+#include "TimedBomb.h"
 namespace Studio
 {
 	BulletFactory::~BulletFactory()
 	{
-		for (auto it = myBullets.begin(); it != myBullets.end(); ++it)
+		for (auto& it : myBullets)
 		{
-			delete (*it).second;
-			SAFE_DELETE((*it).second);
+			SAFE_DELETE((it).second);
 		}
 	}
 
@@ -21,22 +21,34 @@ namespace Studio
 		myBullets.insert(temp_pair);
 	}
 
-	Bullet* BulletFactory::CreateBulletObject(const std::string& aType, const Tga2D::Vector2f& aPosition)
+	Bullet* BulletFactory::CreateBulletObject(const std::string& aType, const Tga2D::Vector2f& aPosition, const float aDamage)
 	{
-		auto tempObject = new Bullet(aPosition, myBullets.at(aType));
+		auto tempObject = new Bullet(aPosition, myBullets.at(aType), aDamage);
 		return tempObject;
 	}
 
-	Missile* BulletFactory::CreateMissileObject(const Enums::BulletOwner& aOwner, const Tga2D::Vector2f& aPosition)
+	Bullet* BulletFactory::CreateBulletObject(const std::string& aType, const Tga2D::Vector2f& aPosition, const Tga2D::Vector2f& aDirection, const float aDamage)
 	{
-		auto missile = new Missile(aOwner, aPosition);
+		auto tempObject = new Bullet(aPosition, aDirection, myBullets.at(aType), aDamage);
+		return tempObject;
+	}
+
+	//Missile* BulletFactory::CreateMissileObject(const Enums::BulletOwner& aOwner, const Tga2D::Vector2f& aPosition)
+	Missile* BulletFactory::CreateMissileObject(const Enums::BulletOwner& aOwner, const Tga2D::Vector2f& aPosition, const float aExplosionRadius)
+	{
+		auto missile = new Missile(aOwner, aPosition, aExplosionRadius);
 		missile->SetOwner(aOwner);
 		return missile;
 	}
+
 
 	AOEBullet* BulletFactory::CreateAOEBullet(const Enums::BulletOwner& aOwner, const Tga2D::Vector2f& aPosition, const float aRadius)
 	{
 		auto aoeBullet = new AOEBullet(aOwner, aPosition, aRadius);
 		return aoeBullet;
+	}
+	TimedBomb* BulletFactory::CreateTimedBomb(const Tga2D::Vector2f& aPosition, const Tga2D::Vector2f& aVelocity, const float aBlastRadius, const float aDamage)
+	{
+		return new TimedBomb(aPosition, aVelocity, aBlastRadius, aDamage);
 	}
 }

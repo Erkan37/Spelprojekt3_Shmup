@@ -163,6 +163,7 @@ namespace Tga2D
         float GetWindowRatio() const;
         float GetWindowRatioInversed() const;
 
+
 		float GetDeltaTime() const { return myDeltaTime; }
         HWND* GetHWND() const;
         HINSTANCE GetHInstance() const;
@@ -180,7 +181,8 @@ namespace Tga2D
 		// If you want to manually tell the engine to render instead of the callback function with the (myUpdateFunctionToCall)
 		bool BeginFrame(const CColor &aClearColor = TGA_DEFAULT_CRYSTAL_BLUE);
 		void EndFrame(void);
-
+        void Minimize();
+        void ReMinimize();
 		void SetAmbientLightValue(float aAmbientLight);
 		CDirectEngine& GetDirect3D() const { return *myDirect3D; }
     private:
@@ -188,6 +190,7 @@ namespace Tga2D
 
 		CFileWatcher* GetFileWatcher() { return myFileWatcher; }
 		
+        VECTOR2UI GetScreenResolution();
 		CRenderer& GetRenderer() const { return *myRenderer; }
 		CTextService& GetTextService() const { return *myTextService; }
 		CWindowsWindow& GetWindow() const { return *myWindow; }
@@ -219,7 +222,8 @@ namespace Tga2D
         CTextureManager* myTextureManager;
         CDebugDrawer* myDebugDrawer;
         CTextService* myTextService;
-		VECTOR2UI myWindowSize;
+        VECTOR2UI myPreviousResolution;
+        VECTOR2UI myWindowSize;
 		VECTOR2UI myRenderSize;
 		VECTOR2UI myTargetSize;
 		VECTOR2UI myNativeRenderSize;

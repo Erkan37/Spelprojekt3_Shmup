@@ -9,10 +9,6 @@ namespace Studio
 {
 	SpriteSheet::SpriteSheet(const char* aImagePath)
 	{
-		// add type check for ImagePath???
-		//std::string path = "Sprites/";
-		//path.append(aImagePath).append(".dds").c_str();
-
 		SAFE_CREATE(mySprite, Tga2D::CSprite(aImagePath));
 		mySprite->SetPivot({ 0.5f, 0.5f });
 		if (aImagePath != nullptr)
@@ -86,6 +82,7 @@ namespace Studio
 	{
 		return mySprite;
 	}
+	
 	const std::string& SpriteSheet::GetImagePath() const
 	{
 		return myImagePath;
@@ -123,6 +120,10 @@ namespace Studio
 	void SpriteSheet::SetPivot(const Tga2D::Vector2f& aPivot)
 	{
 		mySprite->SetPivot(aPivot);
+	}
+	void SpriteSheet::SetColor(const Tga2D::CColor& aColor)
+	{
+		mySprite->SetColor(aColor);
 	}
 	void SpriteSheet::SetSize(const Tga2D::Vector2f& aSize)
 	{
@@ -171,6 +172,16 @@ namespace Studio
 	{
 		myIsPlayingBackwards = true;
 		myIsAnimating = true;
+	}
+
+	const float SpriteSheet::GetRotation() const
+	{
+		return mySprite->GetRotation();
+	}
+
+	void SpriteSheet::SetRotation(const float aRotationInRadians)
+	{
+		mySprite->SetRotation(aRotationInRadians);
 	}
 
 	void SpriteSheet::PlayAnimation(float aSpeed, const std::initializer_list<float> aListOfFrames)

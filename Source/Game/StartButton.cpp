@@ -6,8 +6,11 @@
 #include "AudioManagerAccesor.h"
 #include "AudioManager.h"
 #include "LevelAccessor.h"
+#include "MenuManager.h"
+#include "MenuManagerSingleton.h"
+#include "Timer.h"
 
-
+#define MOUSEPOS Studio::InputManager::GetInstance()->GetMousePosition()
 Studio::StartButton::StartButton(const char* aSpritePath, const VECTOR2F aPosition, const VECTOR2F aSize, const VECTOR2F aPivot, const char* aTag,int aLayer,const bool aShouldStartnextLevel)
 {
 	mySprite = new Tga2D::CSprite(aSpritePath);
@@ -21,15 +24,17 @@ Studio::StartButton::StartButton(const char* aSpritePath, const VECTOR2F aPositi
 	mySpriteSheet->SetSizeRelativeToImage(aSize);
 	mySpriteSheet->SetLayer(aLayer);
 
-	myLeft = mySpriteSheet->GetPosition().x - (mySprite->GetImageSize().x / 2);
-	myRight = mySpriteSheet->GetPosition().x + (mySprite->GetImageSize().x / 2);
-	myTop = mySpriteSheet->GetPosition().y - (mySprite->GetImageSize().y / 2);
-	myBottom = mySprite->GetPosition().y + (mySprite->GetImageSize().y / 2);
-
+	
 	tag = aTag;
 
+	mySize = 1;
+	mySizeTimer = 0;
+
 	myShouldLoadNextLevel = aShouldStartnextLevel;
-	myLevelToLoadPath = 0;
+	myLevelToLoad = 0;
+
+	CalculateButtonCollider();
+
 }
 
 Studio::StartButton::~StartButton()
@@ -42,29 +47,29 @@ Studio::StartButton::~StartButton()
 
 void Studio::StartButton::Update()
 {
-	myWindowHandle = GetForegroundWindow();
 
-	POINT pt;
-	GetCursorPos(&pt);
-	ScreenToClient(myWindowHandle, &pt);
-
+	if (mySizeTimer <= 0.05f && hasBeenHoveredOver)
+	{
+		mySize += Studio::Timer::GetInstance()->TGetDeltaTime();
+		mySizeTimer += Studio::Timer::GetInstance()->TGetDeltaTime();
+	}
 
 	if (myIsEnabled == true)
 	{
 		if (myIsClicked == false)
 		{
-			if (pt.x >= myLeft && pt.x <= myRight)
+			if (MOUSEPOS.x >= myLeft && MOUSEPOS.x <= myRight)
 			{
-				if (pt.y >= myTop && pt.y <= myBottom)
+				if (MOUSEPOS.y >= myTop && MOUSEPOS.y <= myBottom)
 				{
 					if (!hasBeenHoveredOver)
 					{
-						AudioManagerAccessor::GetInstance()->Play2D("Audio/UI/ButtonHoverTemp.wav", false, 0.05f);
+						AudioManagerAccessor::GetInstance()->Play2D("Audio/ButtonMouseOver.flac", false, 0.1f);
 						hasBeenHoveredOver = true;
 					}
 
 
-					if (Studio::InputManager::GetInstance()->GetMouseLPressed())
+					if (Studio::InputManager::GetInstance()->GetMouseLDown())
 					{
 						OnClick();
 						myIsClicked = true;
@@ -73,11 +78,15 @@ void Studio::StartButton::Update()
 				}
 				else
 				{
+					mySize = 1;
+					mySizeTimer = 0;
 					hasBeenHoveredOver = false;
 				}
 			}
 			else
 			{
+				mySize = 1;
+				mySizeTimer = 0;
 				hasBeenHoveredOver = false;
 			}
 		}
@@ -87,6 +96,7 @@ void Studio::StartButton::Update()
 			myIsClicked = false;
 		}
 
+		mySpriteSheet->SetSizeRelativeToImage({ mySize, mySize });
 		Studio::RendererAccessor::GetInstance()->Render(*mySpriteSheet);
 	}
 }
@@ -95,23 +105,35 @@ void Studio::StartButton::OnClick()
 {
 	if (myShouldLoadNextLevel)
 	{
-		myLevelToLoadPath = LevelAccessor::GetInstance()->GetCurrentLevelIndex() + 1;
-		if (myLevelToLoadPath <= LevelAccessor::GetInstance()->GetLevelPaths().size())
+		myLevelToLoad = LevelAccessor::GetInstance()->GetCurrentLevelIndex() + 1;
+
+		if (myLevelToLoad >= LevelAccessor::GetInstance()->GetLevelPaths().size() -1)
 		{
-			LevelAccessor::GetInstance()->LoadLevel(myLevelToLoadPath);
+			myLevelToLoad = LevelAccessor::GetInstance()->GetCurrentLevelIndex();
+		}
+		if (myLevelToLoad <= LevelAccessor::GetInstance()->GetLevelPaths().size())
+		{
+			LevelAccessor::GetInstance()->LoadLevel(myLevelToLoad);
 		}
 	}
 	else
 	{
-		if (myLevelToLoadPath <= LevelAccessor::GetInstance()->GetLevelPaths().size())
+		if (myLevelToLoad <= LevelAccessor::GetInstance()->GetLevelPaths().size())
 		{
-			LevelAccessor::GetInstance()->LoadLevel(myLevelToLoadPath);
+			LevelAccessor::GetInstance()->LoadLevel(myLevelToLoad);
 		}
 	}
 
+	
+
+	AudioManagerAccessor::GetInstance()->StopAllSounds();
+	AudioManagerAccessor::GetInstance()->Play2D("Audio/ButtonClick.flac", false, 0.15f);
+
+	//printf("I have started level: %f", myLevelToLoad);
+	LevelAccessor::GetInstance()->StartUpdating();
 }
 
 void Studio::StartButton::SetLevelToLoad(const int aIndex)
 {
-	myLevelToLoadPath = aIndex;
+	myLevelToLoad = aIndex;
 }

@@ -25,24 +25,11 @@ namespace Studio
 			None
 		};
 
-		enum class RapidFireUpgrades
-		{
-			CooldownT1,
-			AttackSpeedT1,
-			AttackSpeedT2,
-			DurationT1,
-			DurationT2,
-			PenetratingT3
-			
-		};
-
 		enum class Tier1Upgrades
 		{
 			RapidFireCooldown,
 			RapidFireAttackSpeed,
 			RapidFireDuration,
-
-			MovementSpeed,
 
 			BasicAttackSpeed,
 
@@ -99,6 +86,35 @@ namespace Studio
 			CustomKey_Shoot,
 			CustomKey_Pause,
 			CustomKey_Count
+		};
+
+		enum class PowerUpModules
+		{
+			BasicAttackFirst,
+			BasicAttackSecond,
+			RapidFire,
+			Shield
+		};
+
+		// TODO: Remove this
+		enum class Cutscene
+		{
+			Logos,
+			Intro,
+			Outro
+		};
+
+		enum class Video
+		{
+			Logos,
+			Intro,
+			Outro
+		};
+
+		enum class EParticleTypes
+		{
+			eRain,
+			eSnow
 		};
 	}
 }

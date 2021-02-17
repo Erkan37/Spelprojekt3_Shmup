@@ -7,6 +7,7 @@ Studio::TypePattern_Enemy::TypePattern_Enemy(rapidjson::Document& aJsonDoc, cons
 {
 	myHasExtraColliders = false;
 	myIsTerrain = false;
+	myIsTurret = false;
 	if (aType[0] == 'T' && aType[1] == '_')
 	{
 		myIsTerrain = true;
@@ -63,6 +64,10 @@ Studio::TypePattern_Enemy::TypePattern_Enemy(rapidjson::Document& aJsonDoc, cons
 	if (aJsonDoc["Bullet"].HasMember("Interval"))
 	{
 		myShootInterval = aJsonDoc["Bullet"]["Interval"].GetFloat() * 0.001;
+		if (myShootInterval == 0)
+		{
+			myShootInterval = 1000000;
+		}
 	}
 	else
 	{
@@ -78,13 +83,26 @@ Studio::TypePattern_Enemy::TypePattern_Enemy(rapidjson::Document& aJsonDoc, cons
 		path.append(".dds");
 		myImagePath = path;
 
-		
-		if (!JSON["AmountOfFrames"]["X"].IsString() && !JSON["AmountOfFrames"]["Y"].IsString())
+		myUpAnimationRange.first.x = 1;
+		myUpAnimationRange.first.y = 1;
+		myUpAnimationRange.second.x = 1;
+		myUpAnimationRange.second.y = 1;
+
+		myDownAnimationRange.first.x = 1;
+		myDownAnimationRange.first.y = 1;
+		myDownAnimationRange.second.x = 1;
+		myDownAnimationRange.second.y = 1;
+
+		myIdleAnimationRange.first.x = 1;
+		myIdleAnimationRange.first.y = 1;
+		myIdleAnimationRange.second.x = 1;
+		myIdleAnimationRange.second.y = 1;
+
+		if (!JSON["AmountOfFrames"]["X"].IsString() && !JSON["AmountOfFrames"]["Y"].IsString() || JSON["AmountOfFrames"]["Y"].GetFloat() != 1 && JSON["AmountOfFrames"]["X"].GetFloat() != 1)
 		{
 			myAmountOfFrames.x = JSON["AmountOfFrames"]["X"].GetFloat();
 			myAmountOfFrames.y = JSON["AmountOfFrames"]["Y"].GetFloat();
 			myIsAnimating = true;
-
 			//if (JSON["IdleAnimationRange"]["Type"].GetString() == "Custom")
 			//{
 			//	std::stringstream ss = JSON["IdleAnimationRange"]["Frames"].GetString();
@@ -92,64 +110,113 @@ Studio::TypePattern_Enemy::TypePattern_Enemy(rapidjson::Document& aJsonDoc, cons
 			//
 			//	myUsingCustomIdleFrames = true;
 			//}
-			if (JSON["IdleAnimationRange"]["Type"].GetString() == "Start/End")
+			if (JSON["IdleAnimationRange"]["Type"].GetString()[0] == 'S')
 			{
 				myUsingCustomIdleFrames = false;
 				if (!JSON["IdleAnimationRange"]["FrameStartX"].IsString())
 				{
 					myIdleAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameStartX"].GetFloat();
+					if (myIdleAnimationRange.first.x == 0)
+					{
+						myIdleAnimationRange.first.x = 1;
+					}
 				}
 				if (!JSON["IdleAnimationRange"]["FrameStartY"].IsString())
 				{
-					myIdleAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameStartY"].GetFloat();
+					myIdleAnimationRange.first.y = JSON["IdleAnimationRange"]["FrameStartY"].GetFloat();
+					if (myIdleAnimationRange.first.y == 0)
+					{
+						myIdleAnimationRange.first.y = 1;
+					}
 				}
 				if (!JSON["IdleAnimationRange"]["FrameEndX"].IsString())
 				{
-					myIdleAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameEndX"].GetFloat();
+					myIdleAnimationRange.second.x = JSON["IdleAnimationRange"]["FrameEndX"].GetFloat();
+					if (myIdleAnimationRange.second.x == 0)
+					{
+						myIdleAnimationRange.second.x = 1;
+					}
 				}
 				if (!JSON["IdleAnimationRange"]["FrameEndY"].IsString())
 				{
-					myIdleAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameEndY"].GetFloat();
+					myIdleAnimationRange.second.y = JSON["IdleAnimationRange"]["FrameEndY"].GetFloat();
+					if (myIdleAnimationRange.second.x == 0)
+					{
+						myIdleAnimationRange.second.x = 1;
+					}
 				}
 			}
-			if (JSON["UpAnimationRange"]["Type"].GetString() == "Start/End")
+			if (JSON["UpAnimationRange"]["Type"].GetString()[0] == 'S')
 			{
 				myUsingCustomIdleFrames = false;
 				if (!JSON["UpAnimationRange"]["FrameStartX"].IsString())
 				{
-					myUpAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameStartX"].GetFloat();
+					myUpAnimationRange.first.x = JSON["UpAnimationRange"]["FrameStartX"].GetFloat();
+					if (myUpAnimationRange.first.x == 0)
+					{
+						myUpAnimationRange.first.x = 1;
+					}
 				}
 				if (!JSON["UpAnimationRange"]["FrameStartY"].IsString())
 				{
-					myUpAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameStartY"].GetFloat();
+					myUpAnimationRange.first.y = JSON["UpAnimationRange"]["FrameStartY"].GetFloat();
+					if (myUpAnimationRange.first.y == 0)
+					{
+						myUpAnimationRange.first.y = 1;
+					}
 				}
 				if (!JSON["UpAnimationRange"]["FrameEndX"].IsString())
 				{
-					myUpAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameEndX"].GetFloat();
+					myUpAnimationRange.second.x = JSON["UpAnimationRange"]["FrameEndX"].GetFloat();
+					if (myUpAnimationRange.second.x == 0)
+					{
+						myUpAnimationRange.second.x = 1;
+					}
 				}
 				if (!JSON["UpAnimationRange"]["FrameEndY"].IsString())
 				{
-					myUpAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameEndY"].GetFloat();
+					myUpAnimationRange.second.y = JSON["UpAnimationRange"]["FrameEndY"].GetFloat();
+					if (myUpAnimationRange.second.y == 0)
+					{
+						myUpAnimationRange.second.y = 1;
+					}
+					printf("UpAnimation Range first x: %f y: %f Second x: %f y: %f", myUpAnimationRange.first.x, myUpAnimationRange.first.y, myUpAnimationRange.second.x, myUpAnimationRange.second.y);
 				}
 			}
-			if (JSON["DownAnimationRange"]["Type"].GetString() == "Start/End")
+			if (JSON["DownAnimationRange"]["Type"].GetString()[0] == 'S')
 			{
 				myUsingCustomIdleFrames = false;
 				if (!JSON["DownAnimationRange"]["FrameStartX"].IsString())
 				{
-					myDownAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameStartX"].GetFloat();
+					myDownAnimationRange.first.x = JSON["DownAnimationRange"]["FrameStartX"].GetFloat();
+					if (myUpAnimationRange.first.x == 0)
+					{
+						myUpAnimationRange.first.x = 1;
+					}
 				}
 				if (!JSON["DownAnimationRange"]["FrameStartY"].IsString())
 				{
-					myDownAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameStartY"].GetFloat();
+					myDownAnimationRange.first.y = JSON["DownAnimationRange"]["FrameStartY"].GetFloat();
+					if (myUpAnimationRange.first.y == 0)
+					{
+						myUpAnimationRange.first.y = 1;
+					}
 				}
 				if (!JSON["DownAnimationRange"]["FrameEndX"].IsString())
 				{
-					myDownAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameEndX"].GetFloat();
+					myDownAnimationRange.second.x = JSON["DownAnimationRange"]["FrameEndX"].GetFloat();
+					if (myUpAnimationRange.second.x == 0)
+					{
+						myUpAnimationRange.second.x = 1;
+					}
 				}
 				if (!JSON["DownAnimationRange"]["FrameEndY"].IsString())
 				{
-					myDownAnimationRange.first.x = JSON["IdleAnimationRange"]["FrameEndY"].GetFloat();
+					myDownAnimationRange.second.y = JSON["DownAnimationRange"]["FrameEndY"].GetFloat();
+					if (myUpAnimationRange.second.y == 0)
+					{
+						myUpAnimationRange.second.y = 1;
+					}
 				}
 			}
 		}
@@ -195,6 +262,20 @@ void Studio::TypePattern_Enemy::CreateCollissionObjects(rapidjson::Document& aJs
 	}
 }
 
+void Studio::TypePattern_Enemy::CreateTurretObject(rapidjson::Document& aJsonDoc)
+{
+	myIsTurret = true;
+	myTurretRotationSpeed = aJsonDoc["RotationSpeed"].GetFloat();
+	myTurretPivot.x = aJsonDoc["PivotX"].GetFloat();
+	myTurretPivot.y = aJsonDoc["PivotY"].GetFloat();
+	myTurretPath = aJsonDoc["ImagePath"].GetString();
+	myTurretSpawnPoint.x = aJsonDoc["SpawnPositionX"].GetFloat();
+	myTurretSpawnPoint.y = aJsonDoc["SpawnPositionY"].GetFloat();
+	myTurretBulletSpawnPoint.x = aJsonDoc["BulletSpawnPositionX"].GetFloat();
+	myTurretBulletSpawnPoint.y = aJsonDoc["BulletSpawnPositionY"].GetFloat();
+	myIsUpright = aJsonDoc["IsUpright"].GetBool();
+}
+
 const Studio::Enums::MovementPattern Studio::TypePattern_Enemy::GetMovementType() const { return myMovementType; }
 
 const float Studio::TypePattern_Enemy::GetStartHealth() const { return myStartingHealth; }
@@ -214,6 +295,14 @@ const float Studio::TypePattern_Enemy::GetWaveHeigth() const { return myWaveHeig
 const float Studio::TypePattern_Enemy::GetBobbingHeigth() const { return myBobbingHeigth; }
 
 const float Studio::TypePattern_Enemy::GetAcceleration() const { return myAcceleration; }
+
+const float Studio::TypePattern_Enemy::GetTurretRotationSpeed() const { return myTurretRotationSpeed; }
+
+const Tga2D::Vector2f& Studio::TypePattern_Enemy::GetTurretPivot() const { return myTurretPivot; }
+
+const Tga2D::Vector2f& Studio::TypePattern_Enemy::GetTurretSpawnPoint() const { return myTurretSpawnPoint; }
+
+const Tga2D::Vector2f& Studio::TypePattern_Enemy::GetTurretBulletSpawnPoint() const { return myTurretBulletSpawnPoint; }
 
 const Tga2D::Vector2f& Studio::TypePattern_Enemy::GetAmountOfFrames() const{ return myAmountOfFrames;}
 
@@ -245,8 +334,14 @@ const bool Studio::TypePattern_Enemy::GetDiagonalIsTop() const { return myDiagon
 
 const bool Studio::TypePattern_Enemy::GetHasExtraCollission() const { return myHasExtraColliders; }
 
+const bool Studio::TypePattern_Enemy::GetIsTurret() const {return myIsTurret; }
+
+const bool Studio::TypePattern_Enemy::GetIsUpright() const { return myIsUpright; }
+
 const std::vector<std::pair<float, VECTOR2F>>& Studio::TypePattern_Enemy::GetCircleColliders() { return myCircleColliders; }
 
 const std::vector<std::pair<VECTOR2F, VECTOR2F>>& Studio::TypePattern_Enemy::GetBoxColliders() { return myBoxColliders; }
 
 const std::string& Studio::TypePattern_Enemy::GetImagePath() const { return myImagePath; }
+
+const std::string& Studio::TypePattern_Enemy::GetTurretPipeImagePath() const { return myTurretPath; }

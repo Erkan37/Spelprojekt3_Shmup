@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Module_Shoot.h"
 #include "LevelAccessor.h"
+#include "PlayerAccessor.h"
 #include "Timer.h"
 
 Studio::Module_Shoot::Module_Shoot(rapidjson::Value& aModuleParameter) :
@@ -18,7 +19,7 @@ Studio::Module_Shoot::Module_Shoot(rapidjson::Value& aModuleParameter) :
 	if (aModuleParameter.HasMember("Interval"))
 	{
 		myCounter.SetInterval(aModuleParameter["Interval"].GetFloat() / 1000.0f);
-		printf("%f\n", aModuleParameter["Interval"].GetFloat() / 1000.0f);
+		//printf("%f\n", aModuleParameter["Interval"].GetFloat() / 1000.0f);
 	}
 	else
 	{
@@ -27,7 +28,8 @@ Studio::Module_Shoot::Module_Shoot(rapidjson::Value& aModuleParameter) :
 	}
 	if (aModuleParameter.HasMember("ShootTowardsPlayer"))
 	{
-		if (aModuleParameter["ShootTowardsPlayer"].GetString() == "Yes")
+		std::string type = aModuleParameter["ShootTowardsPlayer"].GetString();
+		if  (type == "Yes")
 		{
 			myShootTowardsPlayer = true;
 		}
@@ -43,12 +45,12 @@ Studio::Module_Shoot::Module_Shoot(rapidjson::Value& aModuleParameter) :
 	}
 	if (aModuleParameter.HasMember("Type"))
 	{
-		myBulletType = "Enemy"/*aModuleParameter["Type"].GetString()*/;
+		myBulletType = "Boss"/*aModuleParameter["Type"].GetString()*/;
 	}
 	else
 	{
 		printf("BulletType in Shoot Module is not read correctly\n");
-		myBulletType = "Enemy";
+		myBulletType = "Boss";
 	}
 	if (aModuleParameter.HasMember("Style"))
 	{
@@ -57,11 +59,14 @@ Studio::Module_Shoot::Module_Shoot(rapidjson::Value& aModuleParameter) :
 		{
 			mySpawnIsRelative = true;
 		}
+		else
+		{
+			mySpawnIsRelative = false;
+		}
 	}
 	else
 	{
 		printf("Style in Shoot Module is not read correctly\n");
-		mySpawnIsRelative = false;
 	}
 
 	if (aModuleParameter.HasMember("X"))
@@ -74,7 +79,7 @@ Studio::Module_Shoot::Module_Shoot(rapidjson::Value& aModuleParameter) :
 
 
 		
-		mySpawnPosition = { x , y };
+		myOriginalSpawnPosition = { x , y };
 
 	}
 	else
@@ -89,26 +94,36 @@ bool Studio::Module_Shoot::DoStuff(Boss& aBoss)
 {
 	if (mySpawnIsRelative)
 	{
-		mySpawnPosition.x = aBoss.GetPosition()->x - mySpawnPosition.x;
-		mySpawnPosition.y = aBoss.GetPosition()->y - mySpawnPosition.y;
+		mySpawnPosition.x = aBoss.GetPosition()->x + myOriginalSpawnPosition.x;
+		mySpawnPosition.y = aBoss.GetPosition()->y + myOriginalSpawnPosition.y;
 	}
 	else
 	{
-		mySpawnPosition.x = SCREEN_WIDTH - mySpawnPosition.x;
-		mySpawnPosition.y = mySpawnPosition.y + SCREEN_HEIGHT * 0.5f;
+		mySpawnPosition.x = SCREEN_WIDTH - myOriginalSpawnPosition.x;
+		mySpawnPosition.y = myOriginalSpawnPosition.y + SCREEN_HEIGHT * 0.5f;
 	}
 	myCounter.Tick();
 	myElapsedTime += Studio::Timer::GetInstance()->TGetDeltaTime();
 	if (myCounter.PastInterval())
 	{
-		Studio::LevelAccessor::GetInstance()->SpawnBullet(myBulletType, mySpawnPosition);
-		//printf("Spawned Bullet\n");
+		if (myShootTowardsPlayer)
+		{
+			VECTOR2F direction = mySpawnPosition - Studio::PlayerAccessor::GetInstance()->GetPosition();
+			Studio::LevelAccessor::GetInstance()->SpawnBullet(myBulletType, mySpawnPosition, direction.GetNormalized(), 1);
+		}
+		else
+		{
+			Studio::LevelAccessor::GetInstance()->SpawnBullet(myBulletType, mySpawnPosition, 1);
+		}
 	}
 	if (myElapsedTime >= myActiveDuration)
 	{
 		myElapsedTime = 0.0f;
-		//printf("Shoot Done\n");
 		return true;
 	}
 	return false;
+}
+
+void Studio::Module_Shoot::ResetModule()
+{
 }

@@ -6,9 +6,15 @@
 #include "AudioManagerAccesor.h"
 #include "AudioManager.h"
 #include <string>
+#include "MenuManagerSingleton.h"
+#include "MenuManager.h"
+#include "MenuObject.h"
+#include "TextElement.h"
+#include "Timer.h"
+#include "ImageElement.h"
 
-
-Studio::ShopButton::ShopButton(const char* aPath, const VECTOR2F aPosition, const VECTOR2F aSize, const VECTOR2F aPivot, int aLayer, Enums::RapidFireUpgrades aUpgradeType, int aCost)
+#define MOUSEPOS Studio::InputManager::GetInstance()->GetMousePosition()
+Studio::ShopButton::ShopButton(const char* aPath, const VECTOR2F aPosition, const VECTOR2F aSize, const VECTOR2F aPivot, int aLayer, Enums::Tier1Upgrades aUpgradeType, int aCost, char* aDescription, char* aName)
 {
 	mySprite = new Tga2D::CSprite(aPath);
 	mySprite->SetPivot(aPivot);
@@ -25,47 +31,57 @@ Studio::ShopButton::ShopButton(const char* aPath, const VECTOR2F aPosition, cons
 
 	myCost = aCost;
 
+	myDescription = aDescription;
+	myName = aName;
+
 	myLeft = mySpriteSheet->GetPosition().x - (mySprite->GetImageSize().x / 2);
 	myRight = mySpriteSheet->GetPosition().x + (mySprite->GetImageSize().x / 2);
 	myTop = mySpriteSheet->GetPosition().y - (mySprite->GetImageSize().y / 2);
 	myBottom = mySprite->GetPosition().y + (mySprite->GetImageSize().y / 2);
 
+	mySize = 1;
+	mySizeTimer = 0;
+	CalculateButtonCollider();
+
 }
 
 Studio::ShopButton::~ShopButton()
 {
+	delete mySprite;
+	delete mySpriteSheet;
 }
 
 void Studio::ShopButton::Update()
 {
 
-	myLeft = mySpriteSheet->GetPosition().x - (128 / 2);
-	myRight = mySpriteSheet->GetPosition().x + (128 / 2);
-	myTop = mySpriteSheet->GetPosition().y - (128 / 2);
-	myBottom = mySpriteSheet->GetPosition().y + (128 / 2);
+	CalculateButtonCollider();
 
+	if (mySizeTimer <= 0.05f && hasBeenHoveredOver)
+	{
+		mySize += Studio::Timer::GetInstance()->TGetDeltaTime();
+		mySizeTimer += Studio::Timer::GetInstance()->TGetDeltaTime();
+	}
 
 	if (myIsEnabled == true)
 	{
 
-		myWindowHandle = GetForegroundWindow();
-
-		POINT pt;
-		GetCursorPos(&pt);
-		ScreenToClient(myWindowHandle, &pt);
-
-		
 		if (myIsClicked == false)
 		{
-			if (pt.x >= myLeft && pt.x <= myRight)
+			if (MOUSEPOS.x >= myLeft && MOUSEPOS.x <= myRight)
 			{
-				if (pt.y >= myTop && pt.y <= myBottom)
+				if (MOUSEPOS.y >= myTop && MOUSEPOS.y <= myBottom)
 				{
 					if (!hasBeenHoveredOver)
 					{
-						AudioManagerAccessor::GetInstance()->Play2D("Audio/UI/ButtonHoverTemp.wav", false, 0.05f);
+						AudioManagerAccessor::GetInstance()->Play2D("Audio/ButtonMouseOver.flac", false, 0.15f);
 						hasBeenHoveredOver = true;
+						MenuManagerSingleton::GetInstance()->GetShopDescriptionText()->SetActive(true);
+						MenuManagerSingleton::GetInstance()->GetShopDescriptionText()->GetSpriteSheet()->SetImagePath(myDescription);
 					}
+
+
+					RendererAccessor::GetInstance()->Render(*MenuManagerSingleton::GetInstance()->GetShopDescriptionText()->GetSpriteSheet());
+
 
 					if (Studio::InputManager::GetInstance()->GetMouseLPressed())
 					{
@@ -75,12 +91,35 @@ void Studio::ShopButton::Update()
 				}
 				else
 				{
+					mySize = 1;
+					mySizeTimer = 0;
+
+					if (hasBeenHoveredOver)
+					{
+						MenuManagerSingleton::GetInstance()->GetShopCostText()->SetActive(false);
+						MenuManagerSingleton::GetInstance()->GetShopUpgradeNameText()->SetActive(false);
+
+					}
+
 					hasBeenHoveredOver = false;
+					
+
 				}
 			}
 			else
 			{
+				mySize = 1;
+				mySizeTimer = 0;
+
+				if (hasBeenHoveredOver)
+				{
+					MenuManagerSingleton::GetInstance()->GetShopCostText()->SetActive(false);
+					MenuManagerSingleton::GetInstance()->GetShopUpgradeNameText()->SetActive(false);
+
+				}
+
 				hasBeenHoveredOver = false;
+
 			}
 		}
 
@@ -89,6 +128,7 @@ void Studio::ShopButton::Update()
 			myIsClicked = false;
 		}
 
+		mySpriteSheet->SetSizeRelativeToImage({ mySize, mySize });
 		Studio::RendererAccessor::GetInstance()->Render(*mySpriteSheet);
 	}
 }
@@ -97,14 +137,19 @@ void Studio::ShopButton::OnClick()
 {
 	if (ScoreAccessor::GetInstance()->GetCoinScore() >= myCost)
 	{
-		PlayerAccessor::GetInstance()->UpgradeRapidFire(myUpgradeType);
-		std::cout << "Shop button pressed" << std::endl;
-		ScoreAccessor::GetInstance()->RemoveCoinScore(myCost);
+		if (!myHasBeenPurchased)
+		{
+			PlayerAccessor::GetInstance()->UpgradeT1(myUpgradeType);
+			AudioManagerAccessor::GetInstance()->Play2D("Audio/ButtonClick.flac", false, 0.15f);
+			ScoreAccessor::GetInstance()->RemoveCoinScore(myCost);
+			mySpriteSheet->GetSprite()->SetColor({ 1,1,1,0.4f });
+			myHasBeenPurchased = true;
+		}
 	}
 }
 
-//void Studio::ShopButton::SetPosition(VECTOR2F aPosition)
-//{
-//	mySpriteSheet->SetPosition(aPosition);
-//}
-//
+void Studio::ShopButton::Reset()
+{
+	mySpriteSheet->GetSprite()->SetColor({ 1,1,1,1 });
+	myHasBeenPurchased = false;
+}

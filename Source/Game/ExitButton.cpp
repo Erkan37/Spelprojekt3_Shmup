@@ -8,7 +8,9 @@
 #include "Renderer.h"
 #include "RendererAccessor.h"
 #include <stdlib.h>
+#include "Timer.h"
 
+#define MOUSEPOS Studio::InputManager::GetInstance()->GetMousePosition()
 Studio::ExitButton::ExitButton(const char* aSpritePath, const VECTOR2F aPosition, const VECTOR2F aSize, const VECTOR2F aPivot, const char* aTag, int aLayer)
 {
 	mySprite = new Tga2D::CSprite(aSpritePath);
@@ -22,10 +24,11 @@ Studio::ExitButton::ExitButton(const char* aSpritePath, const VECTOR2F aPosition
 	mySpriteSheet->SetSizeRelativeToImage(aSize);
 	mySpriteSheet->SetLayer(aLayer);
 
-	myLeft = mySpriteSheet->GetPosition().x - (mySprite->GetImageSize().x / 2);
-	myRight = mySpriteSheet->GetPosition().x + (mySprite->GetImageSize().x / 2);
-	myTop = mySpriteSheet->GetPosition().y - (mySprite->GetImageSize().y / 2);
-	myBottom = mySprite->GetPosition().y + (mySprite->GetImageSize().y / 2);
+	mySize = aSize.x;
+	myOriginalSize = aSize.x;
+	mySizeTimer = 0;
+
+	CalculateButtonCollider();
 
 	tag = aTag;
 }
@@ -40,24 +43,24 @@ Studio::ExitButton::~ExitButton()
 
 void Studio::ExitButton::Update()
 {
-	myWindowHandle = GetForegroundWindow();
 
-	POINT pt;
-	GetCursorPos(&pt);
-	ScreenToClient(myWindowHandle, &pt);
-
+	if (mySizeTimer <= 0.05f && hasBeenHoveredOver)
+	{
+		mySize += Studio::Timer::GetInstance()->TGetDeltaTime();
+		mySizeTimer += Studio::Timer::GetInstance()->TGetDeltaTime();
+	}
 
 	if (myIsEnabled == true)
 	{
 		if (myIsClicked == false)
 		{
-			if (pt.x >= myLeft && pt.x <= myRight)
+			if (MOUSEPOS.x >= myLeft && MOUSEPOS.x <= myRight)
 			{
-				if (pt.y >= myTop && pt.y <= myBottom)
+				if (MOUSEPOS.y >= myTop && MOUSEPOS.y <= myBottom)
 				{
 					if (!hasBeenHoveredOver)
 					{
-						AudioManagerAccessor::GetInstance()->Play2D("Audio/UI/ButtonHoverTemp.wav", false, 0.05f);
+						AudioManagerAccessor::GetInstance()->Play2D("Audio/ButtonMouseOver.flac", false, 0.05f);
 						hasBeenHoveredOver = true;
 					}
 
@@ -71,11 +74,15 @@ void Studio::ExitButton::Update()
 				}
 				else
 				{
+					mySize = myOriginalSize;
+					mySizeTimer = 0;
 					hasBeenHoveredOver = false;
 				}
 			}
 			else
 			{
+				mySize = myOriginalSize;
+				mySizeTimer = 0;
 				hasBeenHoveredOver = false;
 			}
 		}
@@ -85,11 +92,14 @@ void Studio::ExitButton::Update()
 			myIsClicked = false;
 		}
 
+		mySpriteSheet->SetSizeRelativeToImage({ mySize, mySize });
 		Studio::RendererAccessor::GetInstance()->Render(*mySpriteSheet);
 	}
 }
 
 void Studio::ExitButton::OnClick()
 {
-	//exit(0);
+	PostMessage(myWindowHandle, WM_CLOSE, 0, 0);
+	AudioManagerAccessor::GetInstance()->Play2D("Audio/ButtonClick.flac", false, 0.15f);
+
 }

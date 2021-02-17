@@ -40,7 +40,7 @@ void Studio::BossManager::LoadBosses()
 		}
 		file.close();
 		document.Parse(text.c_str());
-		myBosses.push_back(new Boss("Sprites/assets/enemies/boss/globePhase_01.dds", document));
+		myBosses.push_back(new Boss("Sprites/assets/enemies/boss/bossGloben_sprite_01.dds", document));
 	}
 	myAmountOfBosses = static_cast<int>(myBosses.size());
 }
@@ -49,6 +49,7 @@ Studio::Boss* Studio::BossManager::GetLevelBoss(int aLevelCount)
 {
 	if (aLevelCount < myAmountOfBosses)
 	{
+		myBosses[aLevelCount]->ResetBoss();
 		return myBosses[aLevelCount];
 	}
 	return nullptr;

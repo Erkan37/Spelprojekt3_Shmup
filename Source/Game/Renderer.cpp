@@ -53,7 +53,7 @@ void Renderer::Render(Studio::SpriteSheet& aSpriteSheet)
 }
 
 // Batching stuff
-void Renderer::Render()
+void Renderer::Render(const float aDeltaTime)
 {
 	// Move to own method
 	for (auto& spriteSheet : *myReadBuffer)
@@ -105,9 +105,12 @@ void Renderer::Render()
 			auto sprite = spriteSheet.GetSprite();
 			sprite->SetSizeRelativeToScreen({
 				spriteSheet.GetSize().x / SCREEN_HEIGHT, // Use height on both because
-				spriteSheet.GetSize().y / SCREEN_HEIGHT  // Tga2D is "special"
+				spriteSheet.GetSize().y / SCREEN_HEIGHT // Tga2D is "special"
 			});
-			sprite->SetPosition({ spriteSheet.GetPosition().x / SCREEN_WIDTH, spriteSheet.GetPosition().y / SCREEN_HEIGHT });
+			sprite->SetPosition({ (spriteSheet.GetPosition().x + _x) / SCREEN_WIDTH, (spriteSheet.GetPosition().y + _y) / SCREEN_HEIGHT });
+
+			//sprite->SetPosition(sprite->GetPosition() + VECTOR2F(aDeltaTime, aDeltaTime));
+
 			myCoolMap.at(spriteSheet.GetLayer())[spriteSheet.GetImagePath()]->AddObject(sprite);
 			
 			// Used in sorting
@@ -123,5 +126,29 @@ void Renderer::Render()
 			batch->Render();
 			batch->ClearAll();
 		}
+	}
+
+	Update(aDeltaTime);
+}
+
+void Renderer::ShakeCamera(const float aOomphValue, const float aDuration)
+{
+	myOomph = aOomphValue;
+	myShakeDuration = 1.0f / aDuration;
+}
+
+void Renderer::Update(const float aDeltaTime)
+{
+	_x = (rand() % 5) * myOomph;
+	_y = (rand() % 7) * myOomph;
+	
+
+	// dampen the oomph
+	myOomph -= myOomph * myShakeDuration * aDeltaTime;
+
+	// Prevent the shake to steer out of control
+	if (myOomph < 0.0f)
+	{
+		myOomph = 0.0f;
 	}
 }

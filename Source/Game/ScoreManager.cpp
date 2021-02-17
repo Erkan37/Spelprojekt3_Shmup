@@ -3,6 +3,9 @@
 #include "MenuManagerSingleton.h"
 #include <iostream>
 #include <string>
+#include "AudioManager.h"
+#include "AudioManagerAccesor.h"
+
 namespace Studio
 {
 	ScoreManager::ScoreManager()
@@ -13,10 +16,6 @@ namespace Studio
 		myCoinTextElement = static_cast<TextElement*>(MenuManagerSingleton::GetInstance()->GetHUD()->GetElementWithTag("CoinText"));
 		myKillTextElement = static_cast<TextElement*>(MenuManagerSingleton::GetInstance()->GetHUD()->GetElementWithTag("ScoreText"));
 		myShopCoinTextElement = static_cast<TextElement*>(MenuManagerSingleton::GetInstance()->GetShop()->GetElementWithTag("ShopCoinText"));
-		if (myCoinTextElement != nullptr)
-		{
-			std::cout << "Score text found" << std::endl;
-		}
 	}
 	void ScoreManager::Update()
 	{
@@ -26,11 +25,12 @@ namespace Studio
 		std::string killScoreString = std::to_string(myKillScore);
 		myKillTextElement->SetText("x" + killScoreString);
 
-		myShopCoinTextElement->SetText("Your score: " + coinScoreString);
+		myShopCoinTextElement->SetText(coinScoreString);
 	}
 	void ScoreManager::AddCoinScore(int anAmount)
 	{
 		myCoinScore += anAmount;
+		AudioManagerAccessor::GetInstance()->Play2D("Audio/CoinPickUp.mp3", false, 0.2f);
 	}
 
 	void ScoreManager::RemoveCoinScore(int anAmount)

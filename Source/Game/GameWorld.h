@@ -14,6 +14,8 @@ namespace Studio
 	class Score;
 	class AudioManager;
 	class Player_JsonParser;
+	class VideoPlayer;
+	class MousePointer;
 }
 namespace Tga2D
 {
@@ -29,11 +31,13 @@ public:
 	~CGameWorld();
 
 	void Init();
-	void Update(float aDeltaTime, std::atomic<bool>& aIsPlaying);
+	void Update(float aDeltaTime, std::atomic<bool>& aIsPlaying, bool aHasTabbed);
 	void Render();
 	void SwapBuffers();
 private:
 	void InputStuff();
+	bool myHasStarted;
+
 	Studio::BackgroundManager myBackgroundManager;
 	Renderer myRenderer;
 	Tga2D::CSprite* myTga2dLogoSprite;
@@ -50,4 +54,8 @@ private:
 	Studio::LevelManager* myLevelManager;
 	std::vector<Studio::Enemy*> myEnemies;
 	Studio::Player_JsonParser* myPlayerData;
+
+	Studio::VideoPlayer* myVideoPlayer;
+	
+	Studio::MousePointer* myMousePointer;
 };

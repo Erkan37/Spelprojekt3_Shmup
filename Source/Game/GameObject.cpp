@@ -1,5 +1,9 @@
 #include "stdafx.h"
 #include "GameObject.h"
+#include <tga2d/sprite/sprite.h>
+#include "Timer.h"
+#include "Renderer.h"
+#include "RendererAccessor.h"
 namespace Studio
 {
 	GameObject::GameObject() : mySpriteSheet(nullptr)
@@ -7,13 +11,13 @@ namespace Studio
 	}
 
 	GameObject::GameObject(const std::string& anImagePath) :
-		myHealth(100), // Maybe this should be set somewhere???
+		myHealth(1), // Maybe this should be set somewhere???
 		mySpriteSheet(anImagePath.c_str())
 	{
 	}
 
 	GameObject::GameObject(const std::string& anImagePath, const Tga2D::Vector2f& aAmountOfFrames) :
-		myHealth(100),
+		myHealth(1),
 		mySpriteSheet(anImagePath.c_str(), aAmountOfFrames)
 	{
 	}
@@ -30,6 +34,28 @@ namespace Studio
 		mySpriteSheet.SetPosition(aPos);
 		mySpriteSheet.UpdateAnimation();
 		myPosition = aPos;
+
+		// Visial hit effect
+		myTimeSinceHit += DELTA_TIME;
+		                   // 1.0f
+		if (myTimeSinceHit < 0.25f && !myHealth.GetGodMode())
+		{
+			auto color = Tga2D::CColor(2550.0f, 2550.0f, 2550.0f, 1.0f);
+			if (fmodf(myTimeSinceHit, 0.20f) > 0.10f)
+			{
+				color = Tga2D::CColor(2550.0f, 0.0f, 0.0f, 1.0f);
+			}
+
+			// Old code
+			//auto color = Tga2D::CColor(1.0f, 1.0f, 1.0f, 1.0f);
+			//color.myR = 1.0f / myTimeSinceHit;
+
+			mySpriteSheet.GetSprite()->SetColor(color);
+		}
+		else
+		{
+			mySpriteSheet.GetSprite()->SetColor({ 1.0f, 1.0f, 1.0f, 1.f });
+		}
 	}
 	void GameObject::SetFrame(const Tga2D::Vector2f& aCurrentFrame)
 	{
@@ -83,7 +109,15 @@ namespace Studio
 
 	void GameObject::TakeDamage(const float aDamage)
 	{
+		myTimeSinceHit = 0.0f;
+
 		myHealth.TakeDamage(aDamage);
+
+		if (aDamage > 0.0f)
+		{
+			// Test
+			RendererAccessor::GetInstance()->ShakeCamera(2.0f, 0.125f);
+		}
 	}
 
 	const float GameObject::GetMaxHealth()

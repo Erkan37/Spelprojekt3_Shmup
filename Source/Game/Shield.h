@@ -8,8 +8,9 @@ namespace Studio
 	public:
 		Shield(float aHitPoints);
 		~Shield();
-		void Update();
+		void Update(VECTOR2F aPosition);
 		void HitLogic(float aDamage);
+		HealthBar* GetHealthBar();
 
 	private:
 		HealthBar myHealthBar;

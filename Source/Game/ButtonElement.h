@@ -16,6 +16,7 @@ namespace Studio
 		ButtonElement();
 		~ButtonElement();
 
+		void CalculateButtonCollider();
 		virtual void OnClick();
 		virtual void Update();
 
@@ -28,6 +29,8 @@ namespace Studio
 		float myRight;
 		float myTop;
 		float myBottom;
+
+		float myOriginalSize;
 
 		bool hasBeenHoveredOver = false;
 

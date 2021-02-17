@@ -9,16 +9,8 @@
 
 Studio::EnemyFactory::~EnemyFactory()
 {
-	/*using enemyMap = std::map<std::string, TypePattern_Enemy*>;
-	for (enemyMap::iterator it = myEnemyObjects.begin();
-		it != myEnemyObjects.end(); it++)
+	for (auto& it = myEnemyObjectTypes.begin(); it != myEnemyObjectTypes.end(); ++it)
 	{
-		auto& value = it->second;
-		SAFE_DELETE(value);
-	}*/
-	for (auto it = myEnemyObjectTypes.begin(); it != myEnemyObjectTypes.end(); ++it)
-	{
-		delete (*it).second;
 		SAFE_DELETE((*it).second);
 	}
 }
@@ -74,20 +66,29 @@ void Studio::EnemyFactory::InitAllEnemyTypes()
 
 			//Checking if it is a collission Object
 			std::string pathMinusCollision = path;
+			std::string pathMinusPipe = path;
 			pathMinusCollision.erase(pathMinusCollision.end() - 15, pathMinusCollision.end());
+			pathMinusPipe.erase(pathMinusPipe.end() -19, pathMinusPipe.end());
 
-			if (pathMinusCollision != previousPath)
+			if (pathMinusCollision != previousPath && pathMinusPipe != previousPath)
 			{
 				std::string type = path.substr(13);
 				type.erase(type.end() - 5, type.end());
 				InitEnemyType(document, type);
 			}
-			else
+			if (pathMinusPipe == previousPath)
+			{
+				std::string type = path.substr(13);
+				type.erase(type.end() - 19, type.end());
+				myEnemyObjectTypes.at(type)->CreateTurretObject(document);
+			}
+			if (pathMinusCollision == previousPath)
 			{
 				std::string type = path.substr(13);
 				type.erase(type.end() - 15, type.end());
 				myEnemyObjectTypes.at(type)->CreateCollissionObjects(document);
 			}
+
 			if (iterator == 0)
 			{
 				InitEnemyType(document, "Default");

@@ -15,6 +15,13 @@
 #include "Timer.h"
 #include <string>
 #include "TypePattern_Enemy.h"
+#include "TurretPipe.h"
+#include "AudioManager.h"
+#include "AudioManagerAccesor.h"
+
+#define PI (3.14159265358979323846f)
+#define EPSILON (0.001f)
+#define SPRITESHEET GameObject::GetSpriteSheet()
 
 namespace Studio
 {
@@ -22,13 +29,14 @@ namespace Studio
 		Enemy::GameObject(aEnemyType->GetImagePath()),
 		myMovementType(aEnemyType->GetMovementType())
 	{
+		myTurretPipe = nullptr;
 		myMovement = nullptr;
 		myType = aEnemyType;
 		myPosition = aSpawnPosition;
+		myPosition.x += 200;
 		myScoreValue = 100;
 		myShootTimer = 0;
 		AddColliders();
-		SAFE_CREATE(myBulletSprite, Tga2D::CSprite("sprites/debugpixel.dds"));
 		switch (aEnemyType->GetMovementType())
 		{
 		case Studio::Enums::MovementPattern::Bobbing :
@@ -48,14 +56,12 @@ namespace Studio
 		case Studio::Enums::MovementPattern::Diagonal:
 			if (myType->GetDiagonalIsTop())
 			{
-				//GameObject::SetPosition({ 1920,0 });
 				Tga2D::Vector2f angle = Tga2D::Vector2f({0, 1080}) - GameObject::GetPosition();
 				SAFE_CREATE(myMovement, MovementDiagonal(&myPosition,
 					myType->GetSpeed(), angle.GetNormalized()));
 			}
 			else
 			{
-				//GameObject::SetPosition({ 1920, 1080 });
 				Tga2D::Vector2f angle = Tga2D::Vector2f({0, 0}) - GameObject::GetPosition();
 				SAFE_CREATE(myMovement, MovementDiagonal(&myPosition,
 					myType->GetSpeed(), angle.GetNormalized()));
@@ -64,11 +70,29 @@ namespace Studio
 		default:
 			break;
 		}
+		if (aEnemyType->GetIsTurret())
+		{
+			myTurretPipe = new TurretPipe(this, aEnemyType);
+			if (!myType->GetIsUpright())
+			{
+				mySpriteSheet.SetSizeRelativeToImage({1, -1});
+			}
+		}
+		if (aEnemyType->GetIsPopcorn())
+		{
+			SPRITESHEET.SetAmountOfFrames({ 4, 1 });
+			SPRITESHEET.LoopAnimationInRange(0.083f, { 1,1 }, {3,1});
+		}
+		if (!aEnemyType->GetIsPopcorn() && !aEnemyType->GetIsTurret() && !aEnemyType->GetIsTerrain() && aEnemyType->GetIsAnimating())
+		{
+			SPRITESHEET.SetAmountOfFrames(aEnemyType->GetAmountOfFrames());
+		}
 	}
 
 	Enemy::~Enemy()
 	{
-		SAFE_DELETE(myBulletSprite);
+		AudioManagerAccessor::GetInstance()->Play2D("Audio/EnemyKilled.flac", false, 0.4f);
+
 		SAFE_DELETE(myMovement);
 	}
 
@@ -76,29 +100,40 @@ namespace Studio
 	{
 		if (!IsDead())
 		{
+			if (myType->GetIsTurret())
+			{
+				TurretLogic();
+			}
+			else
+			{
+				Shoot(aDeltaTime);
+			}
 			myMovement->Update();
-
-			Shoot(aDeltaTime);
-
+			AnimationLogic();
 			Enemy::GameObject::Update(myPosition);
 		}
-
 		UpdateBullets(aDeltaTime);
-
 		for (int i = 0; i < myBullets.size(); i++)
 		{
 			Studio::RendererAccessor::GetInstance()->Render(*myBullets[i]);
 		}
 	}
 
+	void Enemy::TurretLogic()
+	{
+		myTurretPipe->Update();
+	}
+
 	void Enemy::Shoot(float aDeltaTime)
 	{
-		if (!myType->GetIsTerrain())
+		if (!myType->GetIsTerrain() && !myType->GetIsPopcorn())
 		{
 			myShootTimer += aDeltaTime;
 			if (myShootTimer > myType->GetShootInterval())
 			{
-				Studio::LevelAccessor::GetInstance()->SpawnBullet("Enemy", myPosition);
+				AudioManagerAccessor::GetInstance()->Play2D("Audio/EnemyBasicAttack.mp3", false, 0.05f);
+				
+				Studio::LevelAccessor::GetInstance()->SpawnBullet("Enemy", myPosition, 1);
 				myShootTimer = 0;
 			}
 		}
@@ -167,6 +202,50 @@ namespace Studio
 		else
 		{
 			Enemy::GameObject::GetCollider().AddCircleColliderObject({0, 0}, 50);
+		}
+	}
+	void Enemy::AnimationLogic()
+	{
+		if (!myType->GetIsPopcorn() && !myType->GetIsTurret() && !myType->GetIsTerrain() && myType->GetIsAnimating())
+		{
+			float angle = atan(myMovement->GetDirection().y / myMovement->GetDirection().x);
+			if (myMovementType == Studio::Enums::MovementPattern::Wave)
+			{
+				if (angle > 0 - EPSILON && angle < 0 + EPSILON && !myMovingIdle)
+				{
+					myMovingUp = false;
+					myMovingDown = false;
+					//SPRITESHEET.ReverseAndStartAnimation();
+					if (!SPRITESHEET.IsAnimating())
+					{
+						SPRITESHEET.LoopAnimationInRange(0.083f, myType->GetIdleAnimationRange().first, myType->GetIdleAnimationRange().second);
+						myMovingIdle = true;
+					}
+				}
+				if (angle > 0 + EPSILON && !myMovingUp && myMovingDown || myMovingIdle)
+				{
+					myMovingUp = true;
+					myMovingDown = false;
+					myMovingIdle = false;
+					SPRITESHEET.PlayAnimationInRange(0.083f, myType->GetUpAnimationRange().first, myType->GetUpAnimationRange().second);
+				}
+				if (angle < 0 - EPSILON && !myMovingDown && myMovingUp || myMovingIdle)
+				{
+					myMovingUp = false;
+					myMovingDown = true;
+					myMovingIdle = false;
+					SPRITESHEET.PlayAnimationInRange(0.083f, myType->GetDownAnimationRange().first, myType->GetDownAnimationRange().second);
+				}
+			}
+			else
+			{
+				if (!SPRITESHEET.IsAnimating())
+				{
+					SPRITESHEET.LoopAnimationInRange(0.083f, myType->GetIdleAnimationRange().first, myType->GetIdleAnimationRange().second);
+					myMovingIdle = true;
+				}
+			}
+
 		}
 	}
 }

@@ -14,39 +14,44 @@ namespace Studio
 	class Condition;
 	class Sprite;
 	class Shield;
+	class EngineFlame;
 	//Boss Class Implementation
 	class Boss : public GameObject
 	{
 	public:
 		Boss() = default;
-		Boss(const char* aImagePath, VECTOR2F aSpawnPosition, float aHealthAmount);
 		Boss(const char* aImagePath, rapidjson::Value& aBossParameters);
 		~Boss();
 
 		void Update();
 
+		//Condition Checks for Phase transitions
 		bool CheckCurrentPhaseCondition();
-		//Tänk på en ny lösning när du får tid
 		bool GetCurrentPhaseHasPlayedOnce();
 		bool CheckEnrageCondition();
 
-		//Legacy Boss "Swedish Abilities"
-		/*void SendInTheCaroleans(float anAmountOfCanonFodder);
-		void ActivateWelfare(float aTaxAmount);
-		float SellGuns(float aMoralLimit);
-		bool ActPassive(float aInternationalNotoriety);
-		void EnforceAlleMansRätt();*/
+		//Check if there is a transition on the current phase
+		void CheckTransition();
 		
 		void UpdateMovement(Movement* aMovement);
+
+		//Different "Cinematic" movements
+		void PlayIntroMovement();
+		void PlayTransition();
+		bool ReturnToOriginalPosition();
 
 		void ActivateShield(Shield* aShield);
 
 		void HitLogic(float aDamage);
 
+		void SetPosition(const VECTOR2F aPosition);
+
 		float GetTotalBossTime();
-		VECTOR2F* GetPosition();
-		std::vector<VECTOR2F> GetBulletSpawnPositions();
 		
+		VECTOR2F* GetPosition();
+
+		void ResetBoss();
+
 	protected:
 
 	private:
@@ -54,17 +59,27 @@ namespace Studio
 		int myCurrentPhase;
 		int myPhaseAmount;
 		int myTotalFightTime;
+		int myTransitionPhase1 = 3;
+		int myTransitionPhase2 = 6;
+		
+
+		bool myIntroMovementPlayed;
+		bool myIsTransitioning;
+		bool myTransitionAnimationPart1;
+		bool myTransitionAnimationPart2;
 
 		VECTOR2F myPosition;
+		VECTOR2F myOriginalPosition = { 1500.0f , 540.0f};
+		VECTOR2F myLateGameOffset = {0.0f, 0.0f};
 		
 		Movement* myMovement;
+		Movement* myIntroMovement;
 
-		HealthBar myHealthBar;
 		Shield* myShield;
-		std::vector<Condition*> myConditions;
+		HealthBar myHealthBar;
 		Condition* myEnrageCondition;
+		std::vector<Condition*> myConditions;
 		std::vector<Phase*> myPhases;
-		std::vector<VECTOR2F> myBulletSpawnPositions;
 	};
 
 

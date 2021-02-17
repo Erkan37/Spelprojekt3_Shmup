@@ -5,7 +5,7 @@ namespace Studio
 	class Missile : public Bullet
 	{
 	public:
-		Missile(const Enums::BulletOwner& aOwner, const Tga2D::Vector2f& aPosition);
+		Missile(const Enums::BulletOwner& aOwner, const Tga2D::Vector2f& aPosition, const float aExplosionRadius);
 		void Update() override;
 		void Impact() override;
 
@@ -13,8 +13,10 @@ namespace Studio
 
 		float myInitialSpeed,
 			myDeaccelerationSpeed,
-			myAccelerationSpeed;
+			myAccelerationSpeed,
+			myExplosionRadius;
 		bool myIsSlowingDown;
+		bool myIsReversed;
 
 		Tga2D::Vector2f myVelocity;
 	};

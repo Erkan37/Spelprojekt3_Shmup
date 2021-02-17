@@ -4,6 +4,9 @@
 #include <tga2d/error/error_manager.h>
 #include "Timer.h"
 #include "InputManager.h"
+#include "Game_Accessor.h"
+#include "wtypes.h"
+#include "MenuManagerSingleton.h"
 
 using namespace std::placeholders;
 
@@ -24,6 +27,11 @@ CGame::CGame()
 {
 	Studio::InputManager::Construct();
 	Studio::Timer::Construct();
+	myResolution = { 0, 0 };
+	myChangeResolution = false;
+	myToggleFullscreen = false;
+	myIsFullScreen = false;
+	Studio::GameAccessor::GetInstance().SetGame(this);
 }
 
 
@@ -33,6 +41,7 @@ CGame::~CGame()
 	Studio::InputManager::Deconstruct();
 	myHasStarted = false;
 	myIsPlaying = false;
+	myHasSwappedBuffers = true;
 	myGameLogic.join();
 }
 
@@ -71,17 +80,22 @@ bool CGame::Init(const std::wstring& aVersion, HWND /*aHWND*/)
 	createParameters.myApplicationName = L"TGA 2D " + BUILD_NAME + L"[" + aVersion + L"] ";
 	unsigned short windowWidth = 1920;
 	unsigned short windowHeight = 1080;
+	createParameters.myRenderWidth = windowHeight;
+	createParameters.myRenderWidth = windowWidth;
 	createParameters.myWindowHeight = windowHeight;
 	createParameters.myWindowWidth = windowWidth;
+	//createParameters.myWindowSetting = Tga2D::EWindowSetting::EWindowSetting_Borderless;
 	//createParameters.myPreferedMultiSamplingQuality = Tga2D::EMultiSamplingQuality_High;
+	//createParameters.myStartInFullScreen = true;
 	createParameters.myClearColor = (Tga2D::CColor{ 0,0,0,0 });
+	createParameters.myUseLetterboxAndPillarbox = true;
 	createParameters.myActivateDebugSystems = Tga2D::eDebugFeature_Fps |
 		Tga2D::eDebugFeature_Mem |
 		Tga2D::eDebugFeature_Drawcalls |
 		Tga2D::eDebugFeature_Cpu |
 		Tga2D::eDebugFeature_Filewatcher |
 		Tga2D::eDebugFeature_OptimiceWarnings;
-
+	myHasTabbed = false;
 	myGameLogic = std::thread(&CGame::GamePlayThread, this);
 	if (!Tga2D::CEngine::Start(createParameters))
 	{
@@ -89,31 +103,86 @@ bool CGame::Init(const std::wstring& aVersion, HWND /*aHWND*/)
 		system("pause");
 		return false;
 	}
-
 	// End of program
 	return true;
 }
 
+void CGame::SetResolution(const Tga2D::Vector2ui aResolution)
+{
+	myResolution = aResolution;
+	myChangeResolution = true;
+}
+
+void CGame::ToggleFullScreen()
+{
+	myIsFullScreen = !myIsFullScreen;
+	myToggleFullscreen = true;
+}
+
+const bool CGame::GetIsFullscreen() const
+{
+	return myIsFullScreen;
+}
+
+void CGame::Minimize()
+{
+	Tga2D::CEngine::GetInstance()->Minimize();
+}
+
+void CGame::ReMinimize()
+{
+	Tga2D::CEngine::GetInstance()->ReMinimize();
+}
+
 void CGame::InitCallBack()
 {
-	myGameWorld.Init();
+	myGameWorld.Init();	
 	myHasStarted = true;
 }
 
 void CGame::UpdateCallBack()
 {
+	
 	myGameWorld.Render();
 	while (!myGamePlayDone)
 	{
 		std::this_thread::sleep_for(std::chrono::microseconds(1));
 	}
 	myGameWorld.SwapBuffers();
+	if (GetActiveWindow() != GetForegroundWindow())
+	{
+		myHasTabbed = true;
+		//if (!Studio::Timer::GetInstance()->IsFrozen())
+		//{
+		//	Studio::Timer::GetInstance()->Freeze();
+		//}
+		//Studio::GameAccessor::GetInstance().GetGame()->Minimize();
+	}
+	if (myHasTabbed && GetActiveWindow() == GetForegroundWindow())
+	{
+		//Studio::GameAccessor::GetInstance().GetGame()->ReMinimize();
+		if (myIsFullScreen)
+		{
+			//Tga2D::CEngine::GetInstance()->SetFullScreen(myIsFullScreen);
+		}
+		Studio::MenuManagerSingleton::GetInstance()->ResetButtonColliders();
+		myHasTabbed = false;
+	}
+	if (myChangeResolution)
+	{
+		Tga2D::CEngine::GetInstance()->SetResolution(myResolution, true);
+		myChangeResolution = false;
+	}
+	if (myToggleFullscreen)
+	{
+		Tga2D::CEngine::GetInstance()->SetFullScreen(myIsFullScreen);
+		printf("Game SetFullscreen\n");
+		myToggleFullscreen = false;
+		myChangeResolution = true;
+	}
+	
 	myGamePlayDone = false;
 	myHasSwappedBuffers = true;
-
-	if (!myIsPlaying) {
-		//close application properly
-	}
 }
 
 void CGame::GamePlayThread()
@@ -124,17 +193,13 @@ void CGame::GamePlayThread()
 		{
 			Studio::Timer::GetInstance()->TUpdate();
 			Studio::InputManager::GetInstance()->Update();
-			myGameWorld.Update(Studio::Timer::GetInstance()->TGetDeltaTime(), myIsPlaying);
+			myGameWorld.Update(Studio::Timer::GetInstance()->TGetDeltaTime(), myIsPlaying, myHasTabbed);
 			myGamePlayDone = true;
 			while (!myHasSwappedBuffers)
 			{
 				std::this_thread::sleep_for(std::chrono::microseconds(1));
 			}
 			myHasSwappedBuffers = false;
-			if (!myIsPlaying)
-			{
-				myHasStarted = true;
-			}
 		}
 	}
 }

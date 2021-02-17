@@ -1,49 +1,80 @@
 #pragma once
 #include<vector>
+#include "macros.h"
 #include "MenuObject.h"
-#include "TestButton.h"
-#include "UIElement.h"
-#include "TextElement.h"
-#include "GodModeButton.h"
-#include "ImageElement.h"
-#include "Player.h"
-#include "ShopUI.h"
-#include "ShopButton.h"
-#include "StartButton.h"
-#include "GenericButton.h"
-#include "ExitButton.h"
 
 namespace Studio
 {
+	class LevelSelect;
+	class Options;
 	class LevelManager;
+	class ImageElement;
+	class TextElement;
+	class SliderElement;
+	class GenericButton;
+	class StartButton;
+	class ExitButton;
+	class UIElement;
+	class ReturnToMainMenuButton;
+	class MenuObject;
+	class ShopUI;
+	class Counter;
+	class Player;
+	class SpriteSheet;
+
 	class MenuManager
 	{
 	public:
 		MenuManager(Studio::Player* aPlayer);
-		
+		~MenuManager();
+
 		std::vector<UIElement*> myShopButtons;
 
 		MenuObject* GetMainMenu();
 		MenuObject* GetHUD();
 		MenuObject* GetPauseMenu();
 		MenuObject* GetShop();
+		MenuObject* GetOptionsMenu();
+		Options* GetOptions();
+		MenuObject* GetCreditsMenu();
 
 		void Update();
 
 		void Render();
 
+		void ResetShop();
+		void ResetAllSizes();
 		bool GameStarted();
 		bool GetGodMode();
 		void SetPlayButtonIndex(const int aIndex);
 		void SetNextLevelIndex(const int aIndex);
 		void Load();
+		void StartGame();
+		void QuitGameSession();
+		void ResetButtonColliders();
 
+		
+
+		ImageElement* GetShopDescriptionText();
+
+		TextElement* GetShopCostText();
+		TextElement* GetShopUpgradeNameText();
+
+		//Jimmikod
+		void GreyOutAbilitiesOnCooldown(float aRapidFireCooldown, float aMissileCooldown, float aShieldCooldown);
+		void GreyOutAbilitiesDuringTutorial();
 	private:
+
+		
 
 		MenuObject myMainMenu;
 		MenuObject myHud;
-		MenuObject myPausMenu;
+		MenuObject myPauseMenu;
 		MenuObject myShop;
+		MenuObject myOptionsMenu;
+		MenuObject myCreditsMenu;
+
+		Counter* myTutorialCounter;
 
 		ShopUI* myShopUI;
 
@@ -51,35 +82,93 @@ namespace Studio
 
 		bool hasStartedGame = false;
 		bool inGodMode = false;
-
+		bool myResizeAllElements;
 		bool myIsLoading;
+		bool myRapidTutorialGrey = true;
+		bool myMissileTutorialGrey = true;
+		bool myShieldTutorialGrey = true;
 		int myLevelToLoad;
+		int myTutorialAction;
 		SpriteSheet* myLoadingScreen;
 
-		StartButton* myStartButton = new StartButton("Sprites/UI/UI_play.dds", { 960,540 }, { 1,1 }, { 0.5f,0.5f }, "PlayButton",10,false);
-		StartButton* myNextLevelButton = new StartButton("Sprites/UI/NextLevelButtonTemp.dds", { 960,800 }, { 1,1 }, { 0.5f,0.5f }, "NextLevelButton",10,true);
-		GenericButton* mySettingsButton = new GenericButton("Sprites/UI/UI_options.dds", { 960,700 }, { 1,1 }, { 0.5f,0.5f }, "OptionsButton", 10);
-		GenericButton* myCreditsButton = new GenericButton("Sprites/UI/UI_credits.dds", { 960,860 }, { 1,1 }, { 0.5f,0.5f }, "CreditsButton", 10);
-		ExitButton* myExitButton = new ExitButton("Sprites/UI/UI_exit.dds", { 960,1020 }, { 1,1 }, { 0.5f,0.5f }, "ExitButton", 10);
+#pragma region MainMenu
+		StartButton* myStartButton;
+		GenericButton* mySettingsButton;
+		GenericButton* myCreditsButton;
+		ExitButton* myExitButton;
+		ImageElement* myMainMenuBackground;
+		ImageElement* myMainMenuLogo;
 
-		TextElement* myScoreText = new TextElement(Tga2D::EFontSize_14, { 0.135,0.117 }, "ScoreText");
-		TextElement* myCoinText = new TextElement(Tga2D::EFontSize_14, { 0.11,0.153 }, "CoinText");
-		GodModeButton* myGodModeButton = new GodModeButton("Sprites/UI/GodmodeButton.dds", { 200,800 }, { 1,1 }, { 0.5f,0.5f }, "StartButton");
+#pragma endregion
 
-		ImageElement* myTestElement = new ImageElement("Sprites/UI/IGUI/IGUI_Banners.dds", { 960,540 }, { 1,1 }, { 0.5f,0.5f }, 2, "HUD");
-		ImageElement* myHeart1Element = new ImageElement("Sprites/UI/IGUI/IGUI_Heart.dds", { 960,540 }, { 1,1 }, { 0.5f,0.5f }, 3,"Heart1");
-		ImageElement* myHeart2Element = new ImageElement("Sprites/UI/IGUI/IGUI_Heart.dds", { 1000,540 }, { 1,1 }, { 0.5f,0.5f }, 3, "Heart2");
-		ImageElement* myHeart3Element = new ImageElement("Sprites/UI/IGUI/IGUI_Heart.dds", { 1040,540 }, { 1,1 }, { 0.5f,0.5f }, 3, "Heart3");
-		ImageElement* myHeart4Element = new ImageElement("Sprites/UI/IGUI/IGUI_Heart.dds", { 1080,540 }, { 1,1 }, { 0.5f,0.5f }, 3, "Heart4");
-		ImageElement* myShopBackground = new ImageElement("Sprites/UI/ShopBackground.dds", { 960,540 }, { 10,10 }, { 0.5f,0.5f }, 0, "ShopBackground");
 
-		ImageElement* myMainMenuBackground = new ImageElement("Sprites/UI/background_maintitle.dds", { 960,540 }, { 1,1 }, { 0.5f,0.5f }, 5, "MainMenuBackground");
-		ImageElement* myMainMenuLogo = new ImageElement("Sprites/UI/UI_gamelogo.dds", { 960,250 }, { 1,1 }, { 0.5f,0.5f }, 6, "MainMenuBackground");
+		StartButton* myNextLevelButton;
 
-		ImageElement* myPausMenuBackground = new ImageElement("Sprites/UI/TempPausMenuBackground.dds", { 960,540 }, { 1,1 }, { 0.5f,0.5f }, 10, "PausMenuBackground");
-		GenericButton* myPausMenuResumeButton = new GenericButton("Sprites/UI/ResumeButtonTemp.dds", { 960,600 }, { 1,1 }, { 0.5f,0.5f }, "ResumeButton", 11);
+		TextElement* myScoreText;
+		TextElement* myCoinText;
 
-		TextElement* myShopCoinText = new TextElement(Tga2D::EFontSize_36, { 0.1,0.5 }, "ShopCoinText");
+		ImageElement* myTestElement;
+		ImageElement* myHeart1Element;
+		ImageElement* myHeart2Element;
+		ImageElement* myHeart3Element;
+		ImageElement* myHeart4Element;
+		ImageElement* myShopBackground;
+		ImageElement* myShopFrames;
+
+		ImageElement* myShopDescriptionText;
+
+		int myRapidCooldown;
+		int myMissileCooldown;
+		int myShieldCooldown;
+
+		TextElement* myRapidCooldownText;
+		TextElement* myMissileCooldownText;
+		TextElement* myShieldCooldownText;
+		
+
+		ImageElement* myAbilityRapid;
+		ImageElement* myAbilityRapidBorder;
+		ImageElement* myAbilityMissile;
+		ImageElement* myAbilityMissileBorder;
+		ImageElement* myAbilityShield;
+		ImageElement* myAbilityShieldBorder;
+
+
+
+
+		ImageElement* myOptionsMenuBackground;
+
+
+		ImageElement* myPausMenuBackground;
+		ImageElement* myPausMenuTitle;
+
+		GenericButton* myPausMenuResumeButton;
+		ReturnToMainMenuButton* myPausMenuQuitButton;
+
+		TextElement* myShopCoinText;
+		TextElement* myShopCostText;
+		TextElement* myShopUpgradeNameText;
+		
+
+		TextElement* myMasterVolumeSliderText;
+		TextElement* myMasterVolumeLabelText;
+
+		TextElement* myOptionsMenuTitleText;
+		ImageElement* myVolumeLabel;
+		ImageElement* myVolumeBar;
+
+		SliderElement* myVolumeSlider;
+
+		ReturnToMainMenuButton* myOptionsMenuReturnButton;
+
+		GenericButton* myLevelSelectButton;
+	
+		LevelSelect* myLevelSelect;
+		Options* myOptions;
+
+		// Credits
+		ImageElement* myCreditsBackground;
+		ReturnToMainMenuButton* myCreditsBackButton;
 	};
 
 

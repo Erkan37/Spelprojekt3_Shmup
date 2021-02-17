@@ -12,7 +12,6 @@
 #include "windows/windows_window.h"
 #include <windows.h>
 #include "imguiinterface/CImGuiInterface.h"
-
 #pragma comment( lib, "user32.lib" )
 
 using namespace Tga2D; 
@@ -85,7 +84,6 @@ void Tga2D::CEngine::DestroyInstance()
 	{
 		myInstance->Shutdown();
 	}
-	
 	SAFE_DELETE(myInstance);
 }
 
@@ -153,6 +151,7 @@ bool CEngine::InternalStart()
 
     if( myUpdateFunctionToCall )
     {
+
         StartStep();
         DestroyInstance();
     }
@@ -299,7 +298,7 @@ void Tga2D::CEngine::UpdateWindowSizeChanges(bool aIgnoreAutoUpdate)
 	}
 	else
 	{
-		SetResolution(VECTOR2UI(myCreateParameters.myTargetWidth, myCreateParameters.myTargetHeight), false);
+		SetResolution(VECTOR2UI(myCreateParameters.myTargetWidth, myCreateParameters.myTargetHeight), true);
 		SetViewPort(0, 0, myCreateParameters.myTargetWidth, myCreateParameters.myTargetHeight);
 	}
 }
@@ -312,6 +311,15 @@ float Tga2D::CEngine::GetWindowRatio() const
 float Tga2D::CEngine::GetWindowRatioInversed() const
 {
 	return myWindowRatioInversed;
+}
+
+VECTOR2UI Tga2D::CEngine::GetScreenResolution()
+{
+		RECT desktop;
+		const HWND hDesktop = GetDesktopWindow();
+		GetWindowRect(hDesktop, &desktop);
+		//printf("Get Windows Rect Y: %i\n", desktop.bottom);
+		return { static_cast<unsigned int>(desktop.right), static_cast<unsigned int>(desktop.bottom)};
 }
 
 VECTOR2F Tga2D::CEngine::GetWindowRatioVec() const
@@ -329,17 +337,30 @@ void Tga2D::CEngine::SetTargetSize(const VECTOR2UI& aTargetSize)
 	myTargetSize = aTargetSize;
 }
 
-void Tga2D::CEngine::SetResolution(const VECTOR2UI &aResolution, bool aAlsoSetWindowSize)
+void Tga2D::CEngine::SetResolution(const VECTOR2UI& aResolution, bool aAlsoSetWindowSize)
 {
-	myWindowSize = aResolution;
-	if (aAlsoSetWindowSize)
+	printf("Engine Set Resolution, Res x: %i, y: %i\n", aResolution.x, aResolution.y);
+	if (aResolution.x == 0 || aResolution.y == 0)
 	{
-		myWindow->SetResolution(aResolution);
+		Tga2D::Vector2ui res;
+		res.x = 1280;
+		res.y = 720;
+		if (aAlsoSetWindowSize)
+		{
+			myWindow->SetResolution(GetScreenResolution());
+		}
+		myDirect3D->SetResolution(GetScreenResolution());
 	}
-	myDirect3D->SetResolution(aResolution);
+	else
+	{
+		if (aAlsoSetWindowSize)
+		{
+			myWindow->SetResolution(aResolution);
+		}
+		myDirect3D->SetResolution(aResolution);
+	}
 	CalculateRatios();
-	
-
+	//UpdateWindowSizeChanges(true);
 }
 
 void Tga2D::CEngine::CalculateRatios()
@@ -370,6 +391,7 @@ void Tga2D::CEngine::CalculateRatios()
 		myWindowRatioVec.x = myWindowRatio;
 		myWindowRatioInversedVec.x = myWindowRatioInversed;
 	}
+
 }
 
 HWND* Tga2D::CEngine::GetHWND() const
@@ -405,6 +427,11 @@ void Tga2D::CEngine::SetFullScreen(bool aFullScreen)
 {
 	if (myDirect3D)
 	{
+		if (aFullScreen)
+		{
+			printf("Screen Size FullScreen X: %i Y: %i\n", GetScreenResolution().x, GetScreenResolution().y);
+			SetResolution(GetScreenResolution(), true);
+		}		
 		myDirect3D->SetFullScreen(aFullScreen);
 	}
 }
@@ -509,4 +536,14 @@ void CEngine::EndFrame( void )
 	});
 
     std::this_thread::yield();
+}
+
+void Tga2D::CEngine::Minimize()
+{
+	//ShowWindow(*myHwnd, SW_HIDE);
+}
+
+void Tga2D::CEngine::ReMinimize()
+{
+	//ShowWindow(*myHwnd, SW_RESTORE);
 }

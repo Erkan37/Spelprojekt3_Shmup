@@ -21,6 +21,11 @@
 #include "MenuObject.h"
 #include "ButtonElement.h"
 #include "GenericButton.h"
+#include "VideoPlayerAccessor.h"
+#include "AudioManager.h"
+#include "AudioManagerAccesor.h"
+#include "Game_Accessor.h"
+#include "MousePointer.h"
 
 CGameWorld::CGameWorld()
 {
@@ -54,7 +59,7 @@ void CGameWorld::Init()
 	// InputManager::GetInstance()->IsCustomKeyDown(Enums::CustomKey_Explosive)
 	//// Or
 	// InputManager::GetInstance()->IsCustomKeyDown(Enums::CustomKeys::CustomKey_Explosive)
-
+	ShowCursor(false);
 	myRenderer.Init();
 	Studio::AudioManagerAccessor::Construct();
 	Studio::RendererAccessor::SetInstance(&myRenderer);
@@ -67,6 +72,8 @@ void CGameWorld::Init()
 
 	Studio::PlayerAccessor::SetInstance(myPlayer);
 
+	SAFE_CREATE(myMousePointer, Studio::MousePointer());
+
 	SAFE_CREATE(myCoinManager, Studio::CoinManager());
 	Studio::CoinAccessor::SetInstance(myCoinManager);
 	SAFE_CREATE(myScoreManager, Studio::ScoreManager());
@@ -74,37 +81,73 @@ void CGameWorld::Init()
 
 	
 	myBackgroundManager.Init(1920.0f);
-	SAFE_CREATE(myLevelManager, Studio::LevelManager(&myBackgroundManager));
+	SAFE_CREATE(myLevelManager, Studio::LevelManager(&myBackgroundManager, myPlayer));
 	myMenuManager = Studio::MenuManagerSingleton::GetInstance();
 	Studio::LevelAccessor::SetInstance(myLevelManager);
 	myMenuManager->SetPlayButtonIndex(myLevelManager->GetCurrentLevelIndex());
+
+	SAFE_CREATE(myVideoPlayer, Studio::VideoPlayer());
+	Studio::VideoPlayerAccessor::SetInstance(myVideoPlayer);
+	//myVideoPlayer->PlayVideo(Studio::Enums::Video::Logos);
+	myHasStarted = false;
+
+	Studio::AudioManagerAccessor::GetInstance()->Play2D("Audio/MainTheme.mp3", true, 0.15f);
+
+
+
 }
 
 //aIsPlaying is an atomic bool to close the gameplay thread
-void CGameWorld::Update(float aDeltaTime, std::atomic<bool>& aIsPlaying)
+void CGameWorld::Update(float aDeltaTime, std::atomic<bool>& aIsPlaying, bool aHasTabbed)
 {
-	myMenuManager->Load();
-	InputStuff();
-	if (myMenuManager->GameStarted())
+	if (!aHasTabbed)
 	{
-		if (myMenuManager->GetGodMode() == true)
+		InputStuff();
+		if (myVideoPlayer->IsPlaying())
 		{
-			myPlayer->SetGodMode(true);
+			myVideoPlayer->Update();
 		}
-		myScoreManager->Update();
-		myPlayer->Update();
-		myLevelManager->Update(myPlayer);
-		myCoinManager->Update();
-		myBackgroundManager.UpdateBackground(aDeltaTime);
+		else
+		{
+			if (myMenuManager->GameStarted())
+			{
+				if (myMenuManager->GetGodMode() == true)
+				{
+					myPlayer->SetGodMode(true);
+				}
+				myScoreManager->Update();
+				myPlayer->Update();
+				myLevelManager->Update();
+				myCoinManager->Update();
+				myBackgroundManager.UpdateBackground(aDeltaTime);
+			}
+			myMenuManager->Update();
+		}
+		if (myMousePointer != nullptr)
+		{
+			myMousePointer->Update({ Studio::InputManager::GetInstance()->GetMousePosition().x,  Studio::InputManager::GetInstance()->GetMousePosition().y });
+		}
 	}
-	myMenuManager->Update();
+	if (!myHasStarted)
+	{
+		myHasStarted = true;
+		//Studio::GameAccessor::GetInstance().GetGame()->ToggleFullScreen();
+		//myMenuManager->ResetAllSizes();
+	}
+	
 }
 
 void CGameWorld::Render()
 {
-	//myTga2dLogoSprite->Render();
-	myRenderer.Render();
-	myMenuManager->Render();
+	if (myVideoPlayer->IsPlaying())
+	{
+		myVideoPlayer->Render();
+	}
+	else
+	{
+		myRenderer.Render(Studio::DELTA_TIME);
+		myMenuManager->Render();
+	}
 }
 
 void CGameWorld::SwapBuffers()
@@ -125,9 +168,14 @@ void CGameWorld::InputStuff()
 			printf_s("Resumed game\n");
 		}
 	}
-
-	if (Studio::InputManager::GetInstance()->IsCustomKeyPressed(Studio::Enums::CustomKey_Pause))
+	if (Studio::InputManager::GetInstance()->IsKeyPressed('G'))
 	{
+		myPlayer->SetGodMode(!myPlayer->GetHealth().GetGodMode());
+	}
+
+	if (Studio::InputManager::GetInstance()->IsCustomKeyPressed(Studio::Enums::CustomKey_Pause) && myMenuManager->GameStarted())
+	{
+		myMenuManager->GetOptionsMenu()->Disable();
 		Studio::Timer::GetInstance()->ToggleFreeze();
 		if (Studio::Timer::GetInstance()->IsFrozen())
 		{
@@ -145,7 +193,10 @@ void CGameWorld::InputStuff()
 		myMenuManager->GetPauseMenu()->Disable();
 		myMenuManager->GetPauseMenu()->GetElementWithTag("ResumeButton")->myIsClicked = false;
 	}
-
+	if (Studio::InputManager::GetInstance()->IsKeyPressed('B'))
+	{
+		Tga2D::CEngine::GetInstance()->Shutdown();
+	}
 	if (Studio::InputManager::GetInstance()->IsKeyPressed('L'))
 	{
 		myLevelManager->ReloadLevel();
